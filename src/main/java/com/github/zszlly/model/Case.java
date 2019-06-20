@@ -1,6 +1,5 @@
 package com.github.zszlly.model;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -8,37 +7,37 @@ import java.util.Objects;
 public class Case {
 
     private Map<Integer, Class<?>> mockedInstanceClassTable;
-    private Record[] records;
-    private Method method;
-    private Object[] args;
-    private Object returnValue;
+    private Map<Integer, String> primitiveInstanceTable;
+    private Map<String, Integer> fieldTable;
+    private Action[] actions;
+    private Record record;
 
-    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Record[] records, Method method, Object[] args, Object returnValue) {
+    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Map<Integer, String> primitiveInstanceTable, Map<String, Integer> fieldTable, Action[] actions, Record record) {
         this.mockedInstanceClassTable = mockedInstanceClassTable;
-        this.records = records;
-        this.method = method;
-        this.args = args;
-        this.returnValue = returnValue;
+        this.primitiveInstanceTable = primitiveInstanceTable;
+        this.fieldTable = fieldTable;
+        this.actions = actions;
+        this.record = record;
     }
 
     public Map<Integer, Class<?>> getMockedInstanceClassTable() {
         return mockedInstanceClassTable;
     }
 
-    public Record[] getRecords() {
-        return records;
+    public Map<Integer, String> getPrimitiveInstanceTable() {
+        return primitiveInstanceTable;
     }
 
-    public Object[] getArgs() {
-        return args;
+    public Map<String, Integer> getFieldTable() {
+        return fieldTable;
     }
 
-    public Method getMethod() {
-        return method;
+    public Action[] getActions() {
+        return actions;
     }
 
-    public Object getReturnValue() {
-        return returnValue;
+    public Record getRecord() {
+        return record;
     }
 
     @Override
@@ -47,17 +46,16 @@ public class Case {
         if (o == null || getClass() != o.getClass()) return false;
         Case aCase = (Case) o;
         return Objects.equals(mockedInstanceClassTable, aCase.mockedInstanceClassTable) &&
-                Arrays.equals(records, aCase.records) &&
-                Objects.equals(method, aCase.method) &&
-                Arrays.equals(args, aCase.args) &&
-                Objects.equals(returnValue, aCase.returnValue);
+                Objects.equals(primitiveInstanceTable, aCase.primitiveInstanceTable) &&
+                Objects.equals(fieldTable, aCase.fieldTable) &&
+                Arrays.equals(actions, aCase.actions) &&
+                Objects.equals(record, aCase.record);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(mockedInstanceClassTable, method, returnValue);
-        result = 31 * result + Arrays.hashCode(records);
-        result = 31 * result + Arrays.hashCode(args);
+        int result = Objects.hash(mockedInstanceClassTable, primitiveInstanceTable, fieldTable, record);
+        result = 31 * result + Arrays.hashCode(actions);
         return result;
     }
 }

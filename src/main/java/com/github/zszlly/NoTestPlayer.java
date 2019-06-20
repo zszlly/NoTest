@@ -4,6 +4,9 @@ import com.github.zszlly.exceptions.WrongReturnValueException;
 import com.github.zszlly.mock.MockedClassMark;
 import com.github.zszlly.mock.NoTestMocker;
 import com.github.zszlly.model.Case;
+import com.github.zszlly.model.MockedRecord;
+import com.github.zszlly.model.Record;
+import com.github.zszlly.util.SneakyThrow;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,19 +29,22 @@ public class NoTestPlayer {
         MethodScanner.scanMethods(clazz).forEach(method ->
                 cases.stream()
                         .filter(c -> {
-                            Method cMethod = c.getMethod();
+                            Method cMethod = c.getRecord().getMethod();
                             return cMethod.equals(method) && Arrays.equals(cMethod.getParameterTypes(), method.getParameterTypes());
                         })
                         .forEach(c -> {
-                            Object returnValue = testMethod(prepareCase(c), method, c.getArgs());
-                            if (c.getReturnValue() == null && returnValue == null) {
+                            Map<Integer, NoTestMocker> mockedObjectMap = prepareCase(c);
+                            Object returnValue = testMethod(spyInstance(c, mockedObjectMap), method, convertArgs(c, mockedObjectMap));
+                            mockedObjectMap.values().forEach(NoTestMocker::checkInvocation);
+                            Object wantedReturnValue = mockedObjectMap.get((c.getRecord().getReturnValue()).getInstanceId()).getObject();
+                            if (wantedReturnValue == null && returnValue == null) {
                                 return;
                             }
-                            if (c.getReturnValue() == null && returnValue != null) {
+                            if (wantedReturnValue == null) {
                                 throw new WrongReturnValueException("Except: null, but returned: " + returnValue);
                             }
-                            if (!c.getReturnValue().equals(returnValue)) {
-                                throw new WrongReturnValueException("Except: " + c.getReturnValue() + ", but returned: " + returnValue);
+                            if (!wantedReturnValue.equals(returnValue)) {
+                                throw new WrongReturnValueException("Except: " + wantedReturnValue + ", but returned: " + returnValue);
                             }
                         })
         );
@@ -47,25 +53,61 @@ public class NoTestPlayer {
     private Map<Integer, NoTestMocker> prepareCase(Case c) {
         Map<Integer, NoTestMocker> mockedObjectMap = new HashMap<>();
         c.getMockedInstanceClassTable()
-                .forEach((id, klazz) -> NoTestMocker.mock(id, klazz, mockedObjectMap));
-        Arrays.stream(c.getRecords())
-                .forEach(record -> mockedObjectMap.get(record.getObjectId()).addInvocationRecord(record));
-        Object[] args = c.getArgs();
-        for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof MockedClassMark) {
-                args[i] = mockedObjectMap.get(((MockedClassMark) args[i]).getInstanceId()).getObject();
-            }
-        }
+                .forEach((id, klazz) -> {
+                    NoTestMocker instanceMocker = NoTestMocker.mock(id, klazz, c.getPrimitiveInstanceTable());
+                    mockedObjectMap.put(id, instanceMocker);
+                });
+        Arrays.stream(c.getActions())
+                .forEach(action -> {
+                    Record record = action.getRecord();
+                    MockedClassMark[] args = record.getArgs();
+                    Object[] mockedArgs = null;
+                    if (args != null) {
+                        mockedArgs = new Object[args.length];
+                        for (int i = 0; i < args.length; i++) {
+                            mockedArgs[i] = mockedObjectMap.get(args[i].getInstanceId()).getObject();
+                        }
+                    }
+                    mockedObjectMap.get(action.getInstanceId()).addMockedRecord(
+                            new MockedRecord(record.getMethod(), mockedArgs, mockedObjectMap.get(record.getReturnValue().getInstanceId()).getObject()));
+                });
         return mockedObjectMap;
     }
 
-    private Object testMethod(Map<Integer, NoTestMocker> mockedObjectMap, Method method, Object[] args) {
+    private Object[] convertArgs(Case c, Map<Integer, NoTestMocker> mockedObjectMap) {
+        MockedClassMark[] args = c.getRecord().getArgs();
+        Object[] mockedArgs = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            mockedArgs[i] = mockedObjectMap.get((args[i]).getInstanceId()).getObject();
+        }
+        return mockedArgs;
+    }
+
+    private Object spyInstance(Case c, Map<Integer, NoTestMocker> mockedObjectMap) {
+        try {
+            // TODO: enhance this to support create instance without default constructor.
+            Object instance = clazz.getConstructor().newInstance();
+            Map<String, Integer> fieldTable = c.getFieldTable();
+            Arrays.stream(clazz.getDeclaredFields())
+                    .peek(field -> field.setAccessible(true))
+                    .forEach(field -> {
+                        try {
+                            field.set(instance, mockedObjectMap.get(fieldTable.get(field.getName())).getObject());
+                        } catch (IllegalAccessException e) {
+                            SneakyThrow.sneakyThrow(e);
+                        }
+                    });
+            return instance;
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Object testMethod(Object instance, Method method, Object[] args) {
         try {
             method.setAccessible(true);
-            Object returnValue = method.invoke(clazz.getConstructor().newInstance(), args);
-            mockedObjectMap.values().forEach(NoTestMocker::checkInvocation);
-            return returnValue;
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException e) {
+            return method.invoke(instance, args);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(e);
         }
     }
