@@ -52,7 +52,7 @@ public class MethodMocker {
                 }
                 throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want " + Arrays.toString(wantedArgs) + " but inputted " + Arrays.toString(args));
             }
-            if (!(wantedArgs[i] instanceof MockedClassMark)) {
+            if (!(wantedArgs[i] instanceof Integer)) {
                 // TODO replace the fields in this argument(this argument is created by the tested method).
                 continue;
             }

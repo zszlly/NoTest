@@ -1,6 +1,5 @@
 package com.github.zszlly.proxy;
 
-import com.github.zszlly.mock.MockedClassMark;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -13,20 +12,20 @@ import java.util.Map;
 public class NoTestProxy implements MethodInterceptor {
 
     private Object object;
-    private Map<Object, MockedClassMark> map;
+    private Map<Object, Integer> map;
 
-    private NoTestProxy(Object object, Map<Object, MockedClassMark> map) {
+    private NoTestProxy(Object object, Map<Object, Integer> map) {
         this.object = object;
         this.map = map;
     }
 
-    public static <T> T proxy(T t, Map<Object, MockedClassMark> map) {
+    public static <T> T proxy(T t, Map<Object, Integer> map) {
         Enhancer e = new Enhancer();
         e.setSuperclass(t.getClass());
-        e.setInterfaces(new Class[] {MockedClassMark.class});
+        e.setInterfaces(new Class[] {Integer.class});
         e.setCallback(new NoTestProxy(t, map));
         Object proxiedT = e.create();
-        map.put(t, (MockedClassMark) proxiedT);
+        map.put(t, (Integer) proxiedT);
         return (T) proxiedT;
     }
 
@@ -42,7 +41,7 @@ public class NoTestProxy implements MethodInterceptor {
         if (origin == null) {
             return null;
         }
-        if (origin.getClass().isPrimitive() || origin instanceof MockedClassMark) {
+        if (origin.getClass().isPrimitive()) {
             return origin;
         }
         if (map.containsKey(origin)) {

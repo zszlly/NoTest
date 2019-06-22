@@ -8,13 +8,20 @@ public class FieldUtils {
 
     }
 
-    public static <T> void setField(T t, String fieldName, Object fieldValue) {
+    public static void setField(Object obj, String fieldName, Object fieldValue) {
         try {
-            Field field = t.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(t, fieldValue);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
+            setField(obj, obj.getClass().getDeclaredField(fieldName), fieldValue) ;
+        } catch (NoSuchFieldException e) {
+            SneakyThrow.sneakyThrow(e);
+        }
+    }
+
+    public static void setField(Object obj, Field field, Object fieldValue) {
+        field.setAccessible(true);
+        try {
+            field.set(obj, fieldValue);
+        } catch (IllegalAccessException e) {
+            SneakyThrow.sneakyThrow(e);
         }
     }
 

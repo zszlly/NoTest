@@ -1,7 +1,5 @@
 package com.github.zszlly.model;
 
-import com.github.zszlly.mock.MockedClassMark;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Objects;
@@ -9,10 +7,10 @@ import java.util.Objects;
 public class Record {
 
     private Method method;
-    private MockedClassMark[] args;
-    private MockedClassMark returnValue;
+    private Object[] args;
+    private Object returnValue;
 
-    public Record(Method method, MockedClassMark[] args, MockedClassMark returnValue) {
+    public Record(Method method, Object[] args, Object returnValue) {
         this.method = method;
         this.args = args;
         this.returnValue = returnValue;
@@ -22,11 +20,11 @@ public class Record {
         return method;
     }
 
-    public MockedClassMark[] getArgs() {
+    public Object[] getArgs() {
         return args;
     }
 
-    public MockedClassMark getReturnValue() {
+    public Object getReturnValue() {
         return returnValue;
     }
 

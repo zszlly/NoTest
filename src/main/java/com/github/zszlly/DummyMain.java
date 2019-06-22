@@ -1,7 +1,6 @@
 package com.github.zszlly;
 
 import com.github.zszlly.annotation.NoTest;
-import com.github.zszlly.mock.MockedClassMark;
 import com.github.zszlly.model.Action;
 import com.github.zszlly.model.Case;
 import com.github.zszlly.model.Record;
@@ -36,8 +35,8 @@ public class DummyMain {
         primitiveInstanceTable.put(3, "3");
         primitiveInstanceTable.put(4, "4");
         primitiveInstanceTable.put(5, "5");
-        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, () -> 2))}, new Record(addAAndBMethod, new MockedClassMark[]{() -> 10}, () -> 3)));
-        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, () -> 4))}, new Record(addAAndBMethod, new MockedClassMark[]{() -> 10}, () -> 5)));
+        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, 2))}, new Record(addAAndBMethod, new Object[]{10}, 3)));
+        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, 4))}, new Record(addAAndBMethod, new Object[]{10}, 5)));
         NoTestPlayer player = new NoTestPlayer(cases, DummyMain.class);
         player.play();
     }
