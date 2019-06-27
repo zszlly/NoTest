@@ -1,5 +1,7 @@
-package com.github.zszlly;
+package com.github.zszlly.player;
 
+import com.github.zszlly.util.MethodScanner;
+import com.github.zszlly.player.mock.CasePlayer;
 import com.github.zszlly.model.Case;
 
 import java.lang.reflect.Method;

@@ -33,4 +33,12 @@ public class Action {
     public int hashCode() {
         return Objects.hash(instanceIc, record);
     }
+
+    @Override
+    public String toString() {
+        return "Action{" +
+                "instanceIc=" + instanceIc +
+                ", record=" + record +
+                '}';
+    }
 }

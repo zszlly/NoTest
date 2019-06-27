@@ -1,63 +1,100 @@
 package com.github.zszlly;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zszlly.annotation.NoTest;
-import com.github.zszlly.model.Action;
+import com.github.zszlly.io.CaseLoader;
+import com.github.zszlly.io.CaseSaver;
 import com.github.zszlly.model.Case;
-import com.github.zszlly.model.Record;
+import com.github.zszlly.player.NoTestPlayer;
+import com.github.zszlly.recorder.NoTestRecorder;
 
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 
 public class DummyMain {
 
     private int a;
 
     public static void main(String[] args) throws Throwable {
-        Collection<Case> cases = new LinkedList<>();
-        Map<Integer, Class<?>> mockedObjects = new HashMap<>();
-        mockedObjects.put(1, int.class);
-        mockedObjects.put(2, int.class);
-        mockedObjects.put(3, int.class);
-        mockedObjects.put(4, int.class);
-        mockedObjects.put(5, int.class);
-        mockedObjects.put(10, GetB.class);
+        testRecord();
+    }
 
-        Method getBMethod = GetB.class.getDeclaredMethod("getBFn");
-        Method addAAndBMethod = DummyMain.class.getDeclaredMethod("addAAndB", GetB.class);
-        Map<String, Integer> fieldTable = new HashMap<>();
-        fieldTable.put("a", 1);
-        Map<Integer, String> primitiveInstanceTable = new HashMap<>();
-        primitiveInstanceTable.put(1, "1");
-        primitiveInstanceTable.put(2, "2");
-        primitiveInstanceTable.put(3, "3");
-        primitiveInstanceTable.put(4, "4");
-        primitiveInstanceTable.put(5, "5");
-        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, 2))}, new Record(addAAndBMethod, new Object[]{10}, 3)));
-        cases.add(new Case(mockedObjects, primitiveInstanceTable, fieldTable, new Action[]{new Action(10, new Record(getBMethod, null, 4))}, new Record(addAAndBMethod, new Object[]{10}, 5)));
-        NoTestPlayer player = new NoTestPlayer(cases, DummyMain.class);
+    private static void testRecord() throws Throwable {
+        System.out.println("test record");
+        CaseHolder caseHolder = new CaseHolder();
+        DummyMain testDummyMain = NoTestRecorder.record(new DummyMain(), caseHolder);
+        testDummyMain.add(1, 2);
+        testDummyMain.addB(2, () -> 3);
+        testDummyMain.a = 3;
+        testDummyMain.addAAndB(() -> 4);
+        System.out.println("test playback");
+        NoTestPlayer player = new NoTestPlayer(caseHolder.getCases(), DummyMain.class);
         player.play();
     }
 
     @NoTest
-    private int add(int a, int b) {
-        return a + b;
+    public int add(int a, int b) {
+        int value = a + b;
+        System.out.println(value);
+        return value;
     }
 
     @NoTest
-    private int addB(int a, GetB getB) {
-        return a + getB.getBFn();
+    public int addB(int a, GetB getB) {
+        int value = a + getB.getBFn();
+        System.out.println(value);
+        return value;
     }
 
     @NoTest
-    private int addAAndB(GetB getB) {
-        return a + getB.getBFn();
+    public int addAAndB(GetB getB) {
+        int value = a + getB.getBFn();
+        System.out.println(value);
+        return value;
     }
 
     public interface GetB {
         int getBFn();
+    }
+
+    private static class CaseHolder implements CaseSaver, CaseLoader {
+
+        private static final String CASE_FILE_PATH = "cases.json";
+        private static final ObjectMapper MAPPER = new ObjectMapper();
+
+        private List<Case> caseList = new LinkedList<>();
+
+        @Override
+        public void addCase(Case c) {
+            caseList.add(c);
+        }
+
+        @Override
+        public void addCases(Collection<Case> cases) {
+            caseList.addAll(cases);
+        }
+
+        @Override
+        public void save() {
+            try {
+                File file = new File(CASE_FILE_PATH);
+                MAPPER.writeValue(file, caseList);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void load() {
+
+        }
+
+        public Collection<Case> getCases() {
+            return caseList;
+        }
     }
 
 }

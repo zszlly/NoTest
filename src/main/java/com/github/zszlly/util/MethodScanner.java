@@ -1,4 +1,4 @@
-package com.github.zszlly;
+package com.github.zszlly.util;
 
 import com.github.zszlly.annotation.NoTest;
 

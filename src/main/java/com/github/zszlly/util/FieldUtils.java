@@ -8,16 +8,29 @@ public class FieldUtils {
 
     }
 
-    public static void setField(Object obj, String fieldName, Object fieldValue) {
+    public static void setAccessible(Field field) {
+        field.setAccessible(true);
+    }
+
+    public static Object getValue(Field field, Object obj) {
         try {
-            setField(obj, obj.getClass().getDeclaredField(fieldName), fieldValue) ;
+            return field.get(obj);
+        } catch (IllegalAccessException e) {
+            SneakyThrow.sneakyThrow(e);
+        }
+        // would never invoke.
+        throw new IllegalStateException("This could not happen.");
+    }
+
+    public static void setValue(Object obj, String fieldName, Object fieldValue) {
+        try {
+            setValue(obj, obj.getClass().getDeclaredField(fieldName), fieldValue) ;
         } catch (NoSuchFieldException e) {
             SneakyThrow.sneakyThrow(e);
         }
     }
 
-    public static void setField(Object obj, Field field, Object fieldValue) {
-        field.setAccessible(true);
+    public static void setValue(Object obj, Field field, Object fieldValue) {
         try {
             field.set(obj, fieldValue);
         } catch (IllegalAccessException e) {

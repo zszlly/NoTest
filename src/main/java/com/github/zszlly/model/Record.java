@@ -6,11 +6,11 @@ import java.util.Objects;
 
 public class Record {
 
-    private Method method;
-    private Object[] args;
-    private Object returnValue;
+    private final Method method;
+    private final Argument[] args;
+    private final Argument returnValue;
 
-    public Record(Method method, Object[] args, Object returnValue) {
+    public Record(Method method, Argument[] args, Argument returnValue) {
         this.method = method;
         this.args = args;
         this.returnValue = returnValue;
@@ -20,11 +20,11 @@ public class Record {
         return method;
     }
 
-    public Object[] getArgs() {
+    public Argument[] getArgs() {
         return args;
     }
 
-    public Object getReturnValue() {
+    public Argument getReturnValue() {
         return returnValue;
     }
 
@@ -43,5 +43,14 @@ public class Record {
         int result = Objects.hash(method, returnValue);
         result = 31 * result + Arrays.hashCode(args);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Record{" +
+                "method=" + method +
+                ", args=" + Arrays.toString(args) +
+                ", returnValue=" + returnValue +
+                '}';
     }
 }

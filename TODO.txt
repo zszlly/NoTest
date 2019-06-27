@@ -1,0 +1,3 @@
+TODO list
+
+1.  how to mock a instance if it's record as a lambda expression or a anonymous class?

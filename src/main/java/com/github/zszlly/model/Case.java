@@ -6,15 +6,13 @@ import java.util.Objects;
 
 public class Case {
 
-    private Map<Integer, Class<?>> mockedInstanceClassTable;
-    private Map<Integer, String> primitiveInstanceTable;
-    private Map<String, Integer> fieldTable;
-    private Action[] actions;
-    private Record record;
+    private final Map<Integer, Class<?>> mockedInstanceClassTable;
+    private final Map<String, Argument> fieldTable;
+    private final Action[] actions;
+    private final Record record;
 
-    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Map<Integer, String> primitiveInstanceTable, Map<String, Integer> fieldTable, Action[] actions, Record record) {
+    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Map<String, Argument> fieldTable, Action[] actions, Record record) {
         this.mockedInstanceClassTable = mockedInstanceClassTable;
-        this.primitiveInstanceTable = primitiveInstanceTable;
         this.fieldTable = fieldTable;
         this.actions = actions;
         this.record = record;
@@ -24,11 +22,7 @@ public class Case {
         return mockedInstanceClassTable;
     }
 
-    public Map<Integer, String> getPrimitiveInstanceTable() {
-        return primitiveInstanceTable;
-    }
-
-    public Map<String, Integer> getFieldTable() {
+    public Map<String, Argument> getFieldTable() {
         return fieldTable;
     }
 
@@ -46,7 +40,6 @@ public class Case {
         if (o == null || getClass() != o.getClass()) return false;
         Case aCase = (Case) o;
         return Objects.equals(mockedInstanceClassTable, aCase.mockedInstanceClassTable) &&
-                Objects.equals(primitiveInstanceTable, aCase.primitiveInstanceTable) &&
                 Objects.equals(fieldTable, aCase.fieldTable) &&
                 Arrays.equals(actions, aCase.actions) &&
                 Objects.equals(record, aCase.record);
@@ -54,8 +47,18 @@ public class Case {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(mockedInstanceClassTable, primitiveInstanceTable, fieldTable, record);
+        int result = Objects.hash(mockedInstanceClassTable, fieldTable, record);
         result = 31 * result + Arrays.hashCode(actions);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Case{" +
+                "mockedInstanceClassTable=" + mockedInstanceClassTable +
+                ", fieldTable=" + fieldTable +
+                ", actions=" + Arrays.toString(actions) +
+                ", record=" + record +
+                '}';
     }
 }
