@@ -1,11 +1,11 @@
 package com.github.zszlly.player.mock;
 
-import com.github.zszlly.model.MockedArgument;
-import com.github.zszlly.model.PrimitiveArgument;
-import com.github.zszlly.util.NoTestUtils;
 import com.github.zszlly.model.Argument;
 import com.github.zszlly.model.Case;
+import com.github.zszlly.model.MockedArgument;
+import com.github.zszlly.model.PrimitiveArgument;
 import com.github.zszlly.util.FieldUtils;
+import com.github.zszlly.util.NoTestUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,9 +46,8 @@ public class CasePlayer implements Runnable {
                     InstanceMocker instanceMocker = InstanceMocker.mock(id, clazz, mockerMap);
                     mockerMap.put(id, instanceMocker);
                 });
-        Arrays.stream(c.getActions())
-                .forEach(action ->
-                    mockerMap.get(action.getInstanceId()).addRecord(action.getRecord()));
+        c.getActions().forEach(action ->
+                mockerMap.get(action.getInstanceId()).addRecord(action.getRecord()));
     }
 
     private Object[] convertArgs() {

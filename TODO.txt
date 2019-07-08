@@ -1,3 +1,5 @@
 TODO list
 
-1.  how to mock a instance if it's record as a lambda expression or a anonymous class?
+1.  how to mock a instance if it's record as a lambda expression or a anonymous class? // an ugly implementation for some special case, and only works for lambda.
+2.  implement json format case input/output.
+3.  integration with IoC container(Spring).

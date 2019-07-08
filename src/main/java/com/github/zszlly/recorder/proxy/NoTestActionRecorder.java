@@ -1,4 +1,4 @@
-package com.github.zszlly.recorder;
+package com.github.zszlly.recorder.proxy;
 
 import com.github.zszlly.builder.CaseBuilder;
 import com.github.zszlly.model.Action;
@@ -9,19 +9,21 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 
-public class NoTestProxy implements MethodInterceptor {
+/**
+ * Record the method invocation triggered in proxied instance if necessary.
+ */
+public class NoTestActionRecorder implements MethodInterceptor {
 
-    private static final String PROXY_CLASS_NAME = NoTestProxy.class.getName();
-    private static final String RECODER_CLASS_NAME = NoTestRecorder.class.getName();
+    private static final String ACTION_RECORDER_CLASS_NAME = NoTestActionRecorder.class.getName();
+    private static final String INSTANCE_PROXY_CLASS_NAME = NoTestInstanceProxy.class.getName();
 
     private final int instanceId;
     private final Object noTestInstance;
     private final CaseBuilder caseBuilder;
 
-    public NoTestProxy(Object noTestInstance, CaseBuilder caseBuilder) {
+    NoTestActionRecorder(Object noTestInstance, CaseBuilder caseBuilder) {
         try {
             noTestInstance.getClass().getDeclaredMethod("getInstanceId");
             throw new IllegalArgumentException("Impact method \"getInstanceId\" with no arg, please rename the method or change the input args.");
@@ -32,18 +34,21 @@ public class NoTestProxy implements MethodInterceptor {
         }
     }
 
+    /**
+     * @return true only if this invocation triggered by NoTestRecorder.
+     */
     private static boolean needToRecord() {
         StackTraceElement[] stacks = Thread.currentThread().getStackTrace();
         for (int i = 3; i < stacks.length; ++i) {
             String className = stacks[i].getClassName();
-            if (PROXY_CLASS_NAME.equals(className)) {
+            if (ACTION_RECORDER_CLASS_NAME.equals(className)) {
                 return false;
             }
-            if (RECODER_CLASS_NAME.equals(className)) {
+            if (INSTANCE_PROXY_CLASS_NAME.equals(className)) {
                 return true;
             }
         }
-        throw new IllegalStateException("NoTestProxy instance not called by NoTestRecorder.");
+        throw new IllegalStateException("NoTestActionRecorder instance not called by NoTestRecorder.");
     }
 
     @Override
@@ -51,7 +56,6 @@ public class NoTestProxy implements MethodInterceptor {
         if ("getInstanceId".equals(method.getName())) {
             return instanceId;
         }
-        // TODO record this invocation.
         Object returnValue = method.invoke(noTestInstance, args);
         if (needToRecord()) {
             Argument[] recordArgs = new Argument[args.length];
@@ -62,7 +66,7 @@ public class NoTestProxy implements MethodInterceptor {
             Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
             int returnValueInstanceId = NoTestUtils.getInstanceId(recordArgs);
             if (!mockedInstanceClassTable.containsKey(returnValueInstanceId)) {
-                return NoTestRecorder.proxyInstance(returnValue, caseBuilder);
+                return NoTestInstanceProxy.proxyInstance(returnValue, caseBuilder);
             }
         }
         return returnValue;

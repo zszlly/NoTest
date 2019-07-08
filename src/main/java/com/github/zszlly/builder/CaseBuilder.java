@@ -50,7 +50,7 @@ public class CaseBuilder {
     }
 
     public Case build() {
-        return new Case(mockedInstanceClassTable, fieldTable, actions.toArray(new Action[0]), record);
+        return new Case(mockedInstanceClassTable, fieldTable, actions, record);
     }
 
 }

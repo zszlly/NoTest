@@ -1,6 +1,6 @@
 package com.github.zszlly.model;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -8,10 +8,10 @@ public class Case {
 
     private final Map<Integer, Class<?>> mockedInstanceClassTable;
     private final Map<String, Argument> fieldTable;
-    private final Action[] actions;
+    private final List<Action> actions;
     private final Record record;
 
-    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Map<String, Argument> fieldTable, Action[] actions, Record record) {
+    public Case(Map<Integer, Class<?>> mockedInstanceClassTable, Map<String, Argument> fieldTable, List<Action> actions, Record record) {
         this.mockedInstanceClassTable = mockedInstanceClassTable;
         this.fieldTable = fieldTable;
         this.actions = actions;
@@ -26,7 +26,7 @@ public class Case {
         return fieldTable;
     }
 
-    public Action[] getActions() {
+    public List<Action> getActions() {
         return actions;
     }
 
@@ -41,15 +41,13 @@ public class Case {
         Case aCase = (Case) o;
         return Objects.equals(mockedInstanceClassTable, aCase.mockedInstanceClassTable) &&
                 Objects.equals(fieldTable, aCase.fieldTable) &&
-                Arrays.equals(actions, aCase.actions) &&
+                Objects.equals(actions, aCase.actions) &&
                 Objects.equals(record, aCase.record);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(mockedInstanceClassTable, fieldTable, record);
-        result = 31 * result + Arrays.hashCode(actions);
-        return result;
+        return Objects.hash(mockedInstanceClassTable, fieldTable, actions, record);
     }
 
     @Override
@@ -57,7 +55,7 @@ public class Case {
         return "Case{" +
                 "mockedInstanceClassTable=" + mockedInstanceClassTable +
                 ", fieldTable=" + fieldTable +
-                ", actions=" + Arrays.toString(actions) +
+                ", actions=" + actions +
                 ", record=" + record +
                 '}';
     }

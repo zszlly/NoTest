@@ -11,6 +11,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Instance Mocker, will intercept every invocation and redirect to corresponding MethodMocker.
+ */
 @SuppressWarnings("unchecked")
 public class InstanceMocker implements MethodInterceptor {
 
