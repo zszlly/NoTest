@@ -1,8 +1,10 @@
 package com.github.zszlly.model;
 
+import com.github.zszlly.io.JsonObject;
+
 import java.util.Objects;
 
-public abstract class Argument {
+public abstract class Argument implements JsonObject {
 
     protected final Integer instanceId;
 

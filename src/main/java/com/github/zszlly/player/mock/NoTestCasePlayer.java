@@ -11,39 +11,40 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * NoTest case playback entry, read case and mock instances then run the test.
  */
-public class CasePlayer implements Runnable {
+public class NoTestCasePlayer implements Runnable {
 
     private Case c;
-    private Map<Integer, InstanceMocker> mockerMap = new HashMap<>();
+    private Map<Integer, NoTestInstanceMocker> mockerMap = new HashMap<>();
 
-    private CasePlayer(Case c) {
+    private NoTestCasePlayer(Case c) {
         this.c = c;
     }
 
     public static void runCase(Case c) {
-        CasePlayer casePlayer = new CasePlayer(c);
+        NoTestCasePlayer casePlayer = new NoTestCasePlayer(c);
         casePlayer.run();
     }
 
     @Override
     public void run() {
         Method method = c.getRecord().getMethod();
-        mockerMap.put(0, new InstanceMocker(0, mockerMap));
+        mockerMap.put(0, new NoTestInstanceMocker(0, mockerMap));
         prepareCase();
         Object returnValue = testMethod(proxyInstance(), method, convertArgs());
-        mockerMap.values().forEach(InstanceMocker::checkInvocation);
+        mockerMap.values().forEach(NoTestInstanceMocker::checkInvocation);
         NoTestUtils.validInstance(c.getRecord().getReturnValue(), returnValue);
     }
 
     private void prepareCase() {
         c.getMockedInstanceClassTable()
                 .forEach((id, clazz) -> {
-                    InstanceMocker instanceMocker = InstanceMocker.mock(id, clazz, mockerMap);
+                    NoTestInstanceMocker instanceMocker = NoTestInstanceMocker.mock(id, clazz, mockerMap);
                     mockerMap.put(id, instanceMocker);
                 });
         c.getActions().forEach(action ->
@@ -51,17 +52,17 @@ public class CasePlayer implements Runnable {
     }
 
     private Object[] convertArgs() {
-        Argument[] args = c.getRecord().getArgs();
-        Object[] mockedArgs = new Object[args.length];
-        for (int i = 0; i < args.length; i++) {
-            mockedArgs[i] = mapInstance(args[i]);
+        List<Argument> args = c.getRecord().getArgs();
+        Object[] mockedArgs = new Object[args.size()];
+        for (int i = 0; i < mockedArgs.length; i++) {
+            mockedArgs[i] = mapInstance(args.get(i));
         }
         return mockedArgs;
     }
 
     private Object mapInstance(Argument arg) {
         if (arg instanceof PrimitiveArgument) {
-            return ((PrimitiveArgument) arg).getValue();
+            return ((PrimitiveArgument) arg).getValueInstance();
         }
         if (arg instanceof MockedArgument) {
             return mockerMap.get(arg.getInstanceId()).getInstance();

@@ -1,22 +1,21 @@
 package com.github.zszlly.model;
 
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.zszlly.io.JsonObject;
 
 import java.util.Objects;
 
-public class Action implements JsonObject {
-
-    private Integer instanceId;
-    private Record record;
+public class ClassHolder {
+    private final Integer instanceId;
+    private final String className;
 
     @JsonCreator
-    public Action(
+    public ClassHolder(
             @JsonProperty("instanceId") Integer instanceId,
-            @JsonProperty("record") Record record) {
+            @JsonProperty("className") String className) {
         this.instanceId = instanceId;
-        this.record = record;
+        this.className = className;
     }
 
     @JsonProperty("instanceId")
@@ -24,30 +23,30 @@ public class Action implements JsonObject {
         return instanceId;
     }
 
-    @JsonProperty("record")
-    public Record getRecord() {
-        return record;
+    @JsonProperty("className")
+    public String getClassName() {
+        return className;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Action action = (Action) o;
-        return Objects.equals(instanceId, action.instanceId) &&
-                Objects.equals(record, action.record);
+        ClassHolder that = (ClassHolder) o;
+        return Objects.equals(instanceId, that.instanceId) &&
+                Objects.equals(className, that.className);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(instanceId, record);
+        return Objects.hash(instanceId, className);
     }
 
     @Override
     public String toString() {
-        return "Action{" +
+        return "ClassHolder{" +
                 "instanceId=" + instanceId +
-                ", record=" + record +
+                ", className='" + className + '\'' +
                 '}';
     }
 }

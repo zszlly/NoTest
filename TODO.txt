@@ -1,5 +1,6 @@
 TODO list
 
 1.  how to mock a instance if it's record as a lambda expression or a anonymous class? // an ugly implementation for some special case, and only works for lambda.
-2.  implement json format case input/output.
-3.  integration with IoC container(Spring).
+2.  implement json format case input/output. // done
+3.  fix nested calling between 2 or more NoTestProxy instance.
+4.  integration with IoC container(Spring).

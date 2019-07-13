@@ -1,5 +1,10 @@
 package com.github.zszlly.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.zszlly.util.ClassUtils;
+
 import java.util.Objects;
 
 public class PrimitiveArgument extends Argument {
@@ -7,17 +12,26 @@ public class PrimitiveArgument extends Argument {
     private final Class<?> type;
     private final String value;
 
+    @JsonCreator
+    public PrimitiveArgument(
+            @JsonProperty("type") String typeName,
+            @JsonProperty("value") String value) {
+        this(ClassUtils.forName(typeName), value);
+    }
+
     public PrimitiveArgument(Class<?> type, String value) {
         super(-1);
         this.type = type;
         this.value = value;
     }
 
+    @JsonIgnore
     public Class<?> getType() {
         return type;
     }
 
-    public Object getValue() {
+    @JsonIgnore
+    public Object getValueInstance() {
         if (type == boolean.class || type == Boolean.class) {
             return Boolean.valueOf(value);
         }
@@ -49,6 +63,16 @@ public class PrimitiveArgument extends Argument {
             return value;
         }
         throw new IllegalArgumentException("Unsupported mock class: " + type.getName());
+    }
+
+    @JsonProperty("type")
+    public String getTypeName() {
+        return type.getName();
+    }
+
+    @JsonProperty("value")
+    public String getValue() {
+        return value;
     }
 
     @Override

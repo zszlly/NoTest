@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class MethodScanner {
+public class NoTestMethodScanner {
 
     public static Collection<Method> scanMethods(Class<?> clazz) {
         return scanMethods(clazz, NoTest.class);

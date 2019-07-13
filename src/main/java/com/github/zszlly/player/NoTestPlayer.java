@@ -1,7 +1,7 @@
 package com.github.zszlly.player;
 
-import com.github.zszlly.util.MethodScanner;
-import com.github.zszlly.player.mock.CasePlayer;
+import com.github.zszlly.util.NoTestMethodScanner;
+import com.github.zszlly.player.mock.NoTestCasePlayer;
 import com.github.zszlly.model.Case;
 
 import java.lang.reflect.Method;
@@ -19,13 +19,13 @@ public class NoTestPlayer {
     }
 
     public void play() {
-        MethodScanner.scanMethods(clazz).forEach(method ->
+        NoTestMethodScanner.scanMethods(clazz).forEach(method ->
                 cases.stream()
                         .filter(c -> {
                             Method cMethod = c.getRecord().getMethod();
                             return cMethod.equals(method) && Arrays.equals(cMethod.getParameterTypes(), method.getParameterTypes());
                         })
-                        .forEach(CasePlayer::runCase)
+                        .forEach(NoTestCasePlayer::runCase)
         );
     }
 

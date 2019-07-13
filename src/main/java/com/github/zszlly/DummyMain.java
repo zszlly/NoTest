@@ -2,6 +2,7 @@ package com.github.zszlly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zszlly.annotation.NoTest;
+import com.github.zszlly.io.CaseHolder;
 import com.github.zszlly.io.CaseLoader;
 import com.github.zszlly.io.CaseSaver;
 import com.github.zszlly.model.Case;
@@ -24,14 +25,18 @@ public class DummyMain {
 
     private static void testRecord() throws Throwable {
         System.out.println("test record");
-        CaseHolder caseHolder = new CaseHolder();
-        DummyMain testDummyMain = NoTestRecorder.record(new DummyMain(), caseHolder);
+        CaseHolderImpl caseHolderImpl = new CaseHolderImpl();
+        DummyMain testDummyMain = NoTestRecorder.record(new DummyMain(), caseHolderImpl);
         testDummyMain.add(1, 2);
         testDummyMain.addB(2, () -> 3);
         testDummyMain.a = 3;
         testDummyMain.addAAndB(() -> 4);
+        ObjectMapper mapper = new ObjectMapper();
+        String caseJson = mapper.writeValueAsString(caseHolderImpl.getCaseHolder());
+        System.out.println(caseJson);
         System.out.println("test playback");
-        NoTestPlayer player = new NoTestPlayer(caseHolder.getCases(), DummyMain.class);
+        CaseHolder cases = mapper.readValue(caseJson, CaseHolder.class);
+        NoTestPlayer player = new NoTestPlayer(cases.getCases(), DummyMain.class);
         player.play();
     }
 
@@ -60,7 +65,7 @@ public class DummyMain {
         int getBFn();
     }
 
-    private static class CaseHolder implements CaseSaver, CaseLoader {
+    private static class CaseHolderImpl implements CaseSaver, CaseLoader {
 
         private static final String CASE_FILE_PATH = "cases.json";
         private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -92,8 +97,9 @@ public class DummyMain {
 
         }
 
-        public Collection<Case> getCases() {
-            return caseList;
+        @Override
+        public CaseHolder getCaseHolder() {
+            return new CaseHolder(caseList);
         }
     }
 

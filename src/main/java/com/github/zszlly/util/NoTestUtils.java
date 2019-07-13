@@ -1,69 +1,39 @@
 package com.github.zszlly.util;
 
 import com.github.zszlly.exceptions.WrongArgumentsException;
-import com.github.zszlly.mark.SpiedInstance;
+import com.github.zszlly.mark.ProxiedInstance;
 import com.github.zszlly.model.*;
-
-import java.util.*;
 
 public class NoTestUtils {
 
-    private static final String LAMBDA_PRIFIX = "$$Lambda$";
-    private static final Set<Class<?>> PRIMITIVE_CLASSES = new HashSet<>();
-
-    static {
-        PRIMITIVE_CLASSES.add(boolean.class);
-        PRIMITIVE_CLASSES.add(char.class);
-        PRIMITIVE_CLASSES.add(byte.class);
-        PRIMITIVE_CLASSES.add(short.class);
-        PRIMITIVE_CLASSES.add(int.class);
-        PRIMITIVE_CLASSES.add(long.class);
-        PRIMITIVE_CLASSES.add(float.class);
-        PRIMITIVE_CLASSES.add(double.class);
-        PRIMITIVE_CLASSES.add(void.class);
-        PRIMITIVE_CLASSES.add(Boolean.class);
-        PRIMITIVE_CLASSES.add(Character.class);
-        PRIMITIVE_CLASSES.add(Byte.class);
-        PRIMITIVE_CLASSES.add(Short.class);
-        PRIMITIVE_CLASSES.add(Integer.class);
-        PRIMITIVE_CLASSES.add(Long.class);
-        PRIMITIVE_CLASSES.add(Float.class);
-        PRIMITIVE_CLASSES.add(Double.class);
-        PRIMITIVE_CLASSES.add(Void.class);
-        PRIMITIVE_CLASSES.add(String.class);
-    }
+    private static final String LAMBDA_PREFIX = "$$Lambda$";
 
     private NoTestUtils() {
     }
 
-    public static boolean isPrimitive(Object instance) {
-        return isPrimitive(instance.getClass());
-    }
-
-    public static boolean isPrimitive(Class<?> clazz) {
-        return PRIMITIVE_CLASSES.contains(clazz);
-    }
-
     public static boolean isLambda(Class<?> clazz) {
-        return clazz.getSimpleName().contains(LAMBDA_PRIFIX);
+        return clazz.getSimpleName().contains(LAMBDA_PREFIX);
     }
 
     public static int getInstanceId(Object instance) {
         if (instance == null) {
             return 0;
         }
-        if (instance instanceof SpiedInstance) {
-            return ((SpiedInstance) instance).getInstanceId();
+        if (instance instanceof ProxiedInstance) {
+            return ((ProxiedInstance) instance).getInstanceId();
         }
         return instance.hashCode();
     }
 
     public static Argument toArgument(Object instance) {
+        if (instance == null) {
+            return new NullArgument();
+        }
         Class<?> clazz = instance.getClass();
-        if (isPrimitive(clazz)) {
+        if (ClassUtils.isPrimitive(clazz)) {
             return new PrimitiveArgument(clazz, instance.toString());
         }
-        if (instance instanceof SpiedInstance) {
+        if (instance instanceof ProxiedInstance) {
             return new MockedArgument(getInstanceId(instance));
         }
         return new GeneratedByMethodArgument(clazz);
@@ -78,7 +48,7 @@ public class NoTestUtils {
             throw new WrongArgumentsException("Invocation want NULL but inputted: " + actual.getClass());
         }
         if (wanted instanceof PrimitiveArgument) {
-            Object primitiveValue = ((PrimitiveArgument) wanted).getValue();
+            Object primitiveValue = ((PrimitiveArgument) wanted).getValueInstance();
             if (primitiveValue.equals(actual)) {
                 return;
             }
@@ -93,10 +63,10 @@ public class NoTestUtils {
             throw new WrongArgumentsException("Invocation want class: " + generatedByMethodArgument.getObjectClass() + " but inputted: " + actual.getClass());
         }
         if (wanted instanceof MockedArgument) {
-            if (wanted.getInstanceId() == ((SpiedInstance) actual).getInstanceId()) {
+            if (wanted.getInstanceId() == ((ProxiedInstance) actual).getInstanceId()) {
                 return;
             }
-            throw new WrongArgumentsException("Invocation want instanceId: " + wanted.getInstanceId() + " but inputted: " + ((SpiedInstance) actual).getInstanceId());
+            throw new WrongArgumentsException("Invocation want instanceId: " + wanted.getInstanceId() + " but inputted: " + ((ProxiedInstance) actual).getInstanceId());
         }
         throw new WrongArgumentsException("Unsupported mock type: " + wanted.getClass().getName());
     }

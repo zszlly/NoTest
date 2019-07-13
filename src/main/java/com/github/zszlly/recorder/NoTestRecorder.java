@@ -8,6 +8,8 @@ import java.util.Arrays;
 
 public class NoTestRecorder {
 
+    private NoTestRecorder() {}
+
     @SuppressWarnings("unchecked")
     public static <T> T record(T instance, CaseSaver saver) {
         Class<?> clazz = instance.getClass();
@@ -18,7 +20,7 @@ public class NoTestRecorder {
         NoTestInstanceProxy instanceProxy = new NoTestInstanceProxy(instance, saver);
         e.setCallback(instanceProxy);
         T proxiedInstance = (T) e.create();
-        instanceProxy.setSpiedInstance(proxiedInstance);
+        instanceProxy.setProxiedInstance(proxiedInstance);
         return proxiedInstance;
     }
 

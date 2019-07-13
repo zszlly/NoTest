@@ -13,6 +13,7 @@ public class FieldUtils {
     }
 
     public static Object getValue(Field field, Object obj) {
+        setAccessible(field);
         try {
             return field.get(obj);
         } catch (IllegalAccessException e) {
@@ -31,6 +32,7 @@ public class FieldUtils {
     }
 
     public static void setValue(Object obj, Field field, Object fieldValue) {
+        setAccessible(field);
         try {
             field.set(obj, fieldValue);
         } catch (IllegalAccessException e) {

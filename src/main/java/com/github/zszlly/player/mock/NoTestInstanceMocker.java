@@ -1,43 +1,43 @@
 package com.github.zszlly.player.mock;
 
-import com.github.zszlly.util.NoTestUtils;
-import com.github.zszlly.mark.SpiedInstance;
+import com.github.zszlly.mark.ProxiedInstance;
 import com.github.zszlly.model.Record;
+import com.github.zszlly.util.ClassUtils;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Instance Mocker, will intercept every invocation and redirect to corresponding MethodMocker.
  */
-@SuppressWarnings("unchecked")
-public class InstanceMocker implements MethodInterceptor {
+public class NoTestInstanceMocker implements MethodInterceptor {
 
     private final int instanceId;
-    private final Map<Integer, InstanceMocker> mockedObjectMap;
-    private Map<Method, MethodMocker> methodMockerMap = new HashMap<>();
+    private final Map<Integer, NoTestInstanceMocker> mockedObjectMap;
+    private Map<Method, NoTestMethodMocker> methodMockerMap = new HashMap<>();
     private Object instance = null;
 
-    InstanceMocker(int instanceId, Map<Integer, InstanceMocker> mockedObjectMap) {
+    NoTestInstanceMocker(int instanceId, Map<Integer, NoTestInstanceMocker> mockedObjectMap) {
         this.instanceId = instanceId;
         this.mockedObjectMap = mockedObjectMap;
     }
 
-    public static InstanceMocker mock(Integer id, Class<?> tClass, Map<Integer, InstanceMocker> mockedObjectMap) {
-        if (NoTestUtils.isPrimitive(tClass)) {
+    public static NoTestInstanceMocker mock(Integer id, Class<?> tClass, Map<Integer, NoTestInstanceMocker> mockedObjectMap) {
+        if (ClassUtils.isPrimitive(tClass)) {
             throw new IllegalArgumentException("Unsupported mocked class: " + tClass);
         }
-        InstanceMocker mocker = new InstanceMocker(id, mockedObjectMap);
+        NoTestInstanceMocker mocker = new NoTestInstanceMocker(id, mockedObjectMap);
         Enhancer e = new Enhancer();
         if (tClass.isInterface()) {
-            e.setInterfaces(new Class[]{tClass, SpiedInstance.class});
+            e.setInterfaces(new Class[]{tClass, ProxiedInstance.class});
         } else {
             e.setSuperclass(tClass);
-            e.setInterfaces(new Class[]{SpiedInstance.class});
+            e.setInterfaces(new Class[]{ProxiedInstance.class});
         }
         e.setCallback(mocker);
         mocker.setInstance(e.create());
@@ -45,7 +45,7 @@ public class InstanceMocker implements MethodInterceptor {
     }
 
     public void addRecord(Record mockedRecord) {
-        methodMockerMap.computeIfAbsent(mockedRecord.getMethod(), method -> new MethodMocker(method, mockedObjectMap)).addRecord(mockedRecord);
+        methodMockerMap.computeIfAbsent(mockedRecord.getMethod(), method -> new NoTestMethodMocker(method, mockedObjectMap)).addRecord(mockedRecord);
     }
 
     @Override
@@ -53,11 +53,11 @@ public class InstanceMocker implements MethodInterceptor {
         if ("getInstanceId".equals(method.getName())) {
             return instanceId;
         }
-        return methodMockerMap.get(method).invoke(args);
+        return methodMockerMap.get(method).invoke(Arrays.asList(args));
     }
 
     public void checkInvocation() {
-        methodMockerMap.values().forEach(MethodMocker::checkInvocationTimes);
+        methodMockerMap.values().forEach(NoTestMethodMocker::checkInvocationTimes);
     }
 
     public int getInstanceId() {

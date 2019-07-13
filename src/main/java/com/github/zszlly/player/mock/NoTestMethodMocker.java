@@ -15,14 +15,14 @@ import java.util.Map;
 /**
  * Mocker and validation for each method will be invoked by the tested method.
  */
-public class MethodMocker {
+public class NoTestMethodMocker {
 
     private final Method method;
-    private final Map<Integer, InstanceMocker> mockedObjectMap;
+    private final Map<Integer, NoTestInstanceMocker> mockedObjectMap;
     private List<Record> recordList = new LinkedList<>();
     private int step = 0;
 
-    public MethodMocker(Method method, Map<Integer, InstanceMocker> mockedObjectMap) {
+    public NoTestMethodMocker(Method method, Map<Integer, NoTestInstanceMocker> mockedObjectMap) {
         this.method = method;
         this.mockedObjectMap = mockedObjectMap;
     }
@@ -32,30 +32,28 @@ public class MethodMocker {
     }
 
     // invoke and valid each invocation
-    public Object invoke(Object[] args) {
+    public Object invoke(List<Object> args) {
         Record[] records = recordList.toArray(new Record[0]);
         if (step == records.length) {
             throw new TooManyInvocationException("Method [" + method.getName() + "] want invoke [" + records.length + "] times but too many invocation.");
         }
         Record record = records[step++];
-        Argument[] wantedArgs = record.getArgs();
-        args = args != null && args.length == 0 ? null : args;
-        wantedArgs = wantedArgs != null && wantedArgs.length == 0 ? null : wantedArgs;
-        if (wantedArgs == null && args == null) {
+        List<Argument> wantedArgs = record.getArgs();
+        if (wantedArgs.isEmpty() && args.isEmpty()) {
             return toInstance(record.getReturnValue());
         }
-        if (wantedArgs == null) {
-            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want no arguments but inputted " + Arrays.toString(args));
+        if (wantedArgs.isEmpty()) {
+            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want no arguments but inputted " + args);
         }
         if (args == null) {
-            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want " + Arrays.toString(wantedArgs) + " but no argument inputted.");
+            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want " + wantedArgs + " but no argument inputted.");
         }
-        if (wantedArgs.length != args.length) {
-            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want " + Arrays.toString(wantedArgs) + " but inputted " + Arrays.toString(args));
+        if (wantedArgs.size() != args.size()) {
+            throw new WrongArgumentsException("Method [" + method.getName() + "] invocation want " + wantedArgs + " but inputted " + args);
         }
         try {
-            for (int i = 0; i < wantedArgs.length; i++) {
-                NoTestUtils.validInstance(wantedArgs[i], args[i]);
+            for (int i = 0; i < wantedArgs.size(); i++) {
+                NoTestUtils.validInstance(wantedArgs.get(i), args.get(i));
             }
             return toInstance(record.getReturnValue());
         } catch (Exception e) {
@@ -74,7 +72,7 @@ public class MethodMocker {
             return null;
         }
         if (argument instanceof PrimitiveArgument) {
-            return ((PrimitiveArgument) argument).getValue();
+            return ((PrimitiveArgument) argument).getValueInstance();
         }
         if (argument instanceof MockedArgument) {
             return mockedObjectMap.get(argument.getInstanceId()).getInstance();

@@ -9,7 +9,10 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Record the method invocation triggered in proxied instance if necessary.
@@ -56,12 +59,14 @@ public class NoTestActionRecorder implements MethodInterceptor {
         if ("getInstanceId".equals(method.getName())) {
             return instanceId;
         }
+        if ("getNoTestInstanceProxyOriginalInstance.".equals(method.getName())) {
+            return noTestInstance;
+        }
         Object returnValue = method.invoke(noTestInstance, args);
         if (needToRecord()) {
-            Argument[] recordArgs = new Argument[args.length];
-            for (int i = 0; i < args.length; i++) {
-                recordArgs[i] = NoTestUtils.toArgument(args[i]);
-            }
+            List<Argument> recordArgs = Arrays.stream(args)
+                    .map(NoTestUtils::toArgument)
+                    .collect(Collectors.toList());
             caseBuilder.getActions().add(new Action(instanceId, new Record(method, recordArgs, NoTestUtils.toArgument(returnValue))));
             Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
             int returnValueInstanceId = NoTestUtils.getInstanceId(recordArgs);
