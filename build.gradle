@@ -1,6 +1,11 @@
+import javax.tools.ToolProvider
+
+
+
 plugins {
     id 'java'
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
 }
 
 group 'com.github.zszlly'
@@ -18,6 +23,20 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
     // https://mvnrepository.com/artifact/cglib/cglib
     compile group: 'cglib', name: 'cglib', version: '3.2.12'
+//    runtime files("${System.properties['java.home']}/../lib/tools.jar")
+// https://mvnrepository.com/artifact/com.github.olivergondza/maven-jdk-tools-wrapper
+    compile group: 'com.github.olivergondza', name: 'maven-jdk-tools-wrapper', version: '0.1'
+    compile(files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs()))
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+shadowJar {
+    baseName = 'no-test'
+    classifier = null
+    version = null
+    manifest {
+        attributes 'Main-Class': 'com.github.zszlly.NoTestAttachment'
+        attributes 'Agent-Class': 'com.github.zszlly.agent.NoTestAgent'
+    }
 }
