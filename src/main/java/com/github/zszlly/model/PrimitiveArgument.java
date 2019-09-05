@@ -87,7 +87,7 @@ public class PrimitiveArgument extends Argument {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), type, value);
+        return Objects.hash(type, value);
     }
 
     @Override

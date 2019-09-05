@@ -4,9 +4,14 @@ import com.github.zszlly.exceptions.WrongArgumentsException;
 import com.github.zszlly.mark.ProxiedInstance;
 import com.github.zszlly.model.*;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class NoTestUtils {
 
     private static final String LAMBDA_PREFIX = "$$Lambda$";
+    public static final VoidArgument VOID_ARGUMENT = new VoidArgument();
 
     private NoTestUtils() {
     }
@@ -23,6 +28,12 @@ public class NoTestUtils {
             return ((ProxiedInstance) instance).getInstanceId();
         }
         return instance.hashCode();
+    }
+
+    public static List<Argument> toArgumentsList(Object[] arguments) {
+        return Arrays.stream(arguments)
+                .map(NoTestUtils::toArgument)
+                .collect(Collectors.toList());
     }
 
     public static Argument toArgument(Object instance) {

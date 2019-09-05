@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * An instance proxy, will record this invocation and save it in Case.
@@ -89,9 +88,9 @@ public class NoTestInstanceProxy implements MethodInterceptor {
                     .toArray());
             return returnValue;
         }
-        // proxy arguments
         CaseBuilder caseBuilder = new CaseBuilder();
         Map<String, Argument> fieldTable = caseBuilder.getFieldTable();
+        // proxy arguments
         Object[] proxiedArgs = Arrays.stream(args)
                 .map(arg -> proxyInstance(arg, caseBuilder))
                 .toArray();
@@ -105,11 +104,8 @@ public class NoTestInstanceProxy implements MethodInterceptor {
         }
         // invoke
         Object returnValue = method.invoke(originalInstance, proxiedArgs);
-        List<Argument> arguments = Arrays.stream(proxiedArgs)
-                .map(NoTestUtils::toArgument)
-                .collect(Collectors.toList());
-        Record record = new Record(method, arguments, NoTestUtils.toArgument(returnValue));
-        caseBuilder.setRecord(record);
+        List<Argument> arguments = NoTestUtils.toArgumentsList(proxiedArgs);
+        caseBuilder.setRecord(new Record(method, arguments, NoTestUtils.toArgument(returnValue)));
         saver.addCase(caseBuilder.build());
         // revert fields
         replaceFieldValue(proxiedInstance, fields, Arrays.stream(proxiedFieldValues)

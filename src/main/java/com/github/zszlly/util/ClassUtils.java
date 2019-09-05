@@ -1,7 +1,10 @@
 package com.github.zszlly.util;
 
+import jdk.internal.org.objectweb.asm.Type;
+
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClassUtils {
 
@@ -101,6 +104,38 @@ public class ClassUtils {
             SneakyThrow.sneakyThrow(e);
         }
         return null;
+    }
+
+    public static Class<?> type2Class(Type type) {
+        String className = type.getClassName();
+        switch (className) {
+            case "void":
+                return void.class;
+            case "boolean":
+                return boolean.class;
+            case "char":
+                return char.class;
+            case "byte":
+                return byte.class;
+            case "short":
+                return short.class;
+            case "int":
+                return int.class;
+            case "float":
+                return float.class;
+            case "long":
+                return long.class;
+            case "double":
+                return double.class;
+            default:
+                try {
+                    return Class.forName(className);
+                } catch (ClassNotFoundException e) {
+                    SneakyThrow.sneakyThrow(e);
+                }
+        }
+        // this won't happen
+        throw new IllegalStateException();
     }
 
 }

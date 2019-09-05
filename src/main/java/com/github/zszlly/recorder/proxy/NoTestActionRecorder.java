@@ -26,7 +26,7 @@ public class NoTestActionRecorder implements MethodInterceptor {
     private final Object noTestInstance;
     private final CaseBuilder caseBuilder;
 
-    NoTestActionRecorder(Object noTestInstance, CaseBuilder caseBuilder) {
+    public NoTestActionRecorder(Object noTestInstance, CaseBuilder caseBuilder) {
         try {
             noTestInstance.getClass().getDeclaredMethod("getInstanceId");
             throw new IllegalArgumentException("Impact method \"getInstanceId\" with no arg, please rename the method or change the input args.");

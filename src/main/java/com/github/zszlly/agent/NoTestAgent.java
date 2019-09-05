@@ -1,14 +1,20 @@
 package com.github.zszlly.agent;
 
+import com.github.zszlly.builder.CaseBuilder;
+import com.github.zszlly.recorder.asm.ASMCaseSaver;
+import com.github.zszlly.recorder.asm.NoTestClassVisitor;
 import jdk.internal.org.objectweb.asm.*;
 import jdk.internal.org.objectweb.asm.util.ASMifier;
+import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 import jdk.internal.org.objectweb.asm.util.TraceClassVisitor;
+import org.w3c.dom.ls.LSOutput;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class NoTestAgent extends ClassLoader {
 
@@ -31,12 +37,18 @@ public class NoTestAgent extends ClassLoader {
         NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw);
         cr.accept(pt, 0);
         byte[] bytes = cw.toByteArray();
+        CheckClassAdapter.verify(new ClassReader(bytes), false, new PrintWriter(System.out));
+        ASMCaseSaver.init(System.out);
         Class<?> clazz = new NoTestAgent().defineClass(null, bytes, 0, bytes.length);
         Object obj = clazz.newInstance();
         Method method1 = clazz.getDeclaredMethod("test1", int.class, Object.class);
         method1.invoke(obj, 1, "2");
         Method method2 = clazz.getDeclaredMethod("test2", float.class, Object.class);
         method2.invoke(obj, (float) 3.0, "4");
+    }
+
+    public static void printArgs(Object... args) {
+        System.out.println(Arrays.asList(args));
     }
 
     public static void main(String[] args) throws Throwable {
