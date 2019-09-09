@@ -10,7 +10,6 @@ public class MockedArgument extends Argument {
         super(instanceId);
     }
 
-
     @Override
     @JsonProperty("instanceId")
     public Integer getInstanceId() {

@@ -9,7 +9,6 @@ import com.github.zszlly.model.Record;
 import com.github.zszlly.util.ClassUtils;
 import com.github.zszlly.util.FieldUtils;
 import com.github.zszlly.util.NoTestUtils;
-import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
@@ -35,29 +34,6 @@ public class NoTestInstanceProxy implements MethodInterceptor {
 
     public static void setPermission(Method method) {
         method.setAccessible(true);
-    }
-
-    static Object proxyInstance(Object instance, CaseBuilder caseBuilder) {
-        if (instance == null) {
-            return null;
-        }
-        if (instance instanceof ProxiedInstance || ClassUtils.isPrimitive(instance)) {
-            return instance;
-        }
-        Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
-        Class<?> clazz = instance.getClass();
-        Enhancer e = new Enhancer();
-        if (NoTestUtils.isLambda(clazz)) {
-            Class<?> interfaceClass = clazz.getInterfaces()[0];
-            mockedInstanceClassTable.put(instance.hashCode(), interfaceClass);
-            e.setInterfaces(new Class[]{interfaceClass, ProxiedInstance.class});
-        } else {
-            mockedInstanceClassTable.put(instance.hashCode(), clazz);
-            e.setSuperclass(clazz);
-            e.setInterfaces(new Class[]{ProxiedInstance.class});
-        }
-        e.setCallback(new NoTestActionRecorder(instance, caseBuilder));
-        return e.create();
     }
 
     private static Object getOriginalObject(Object instance) {
@@ -92,11 +68,11 @@ public class NoTestInstanceProxy implements MethodInterceptor {
         Map<String, Argument> fieldTable = caseBuilder.getFieldTable();
         // proxy arguments
         Object[] proxiedArgs = Arrays.stream(args)
-                .map(arg -> proxyInstance(arg, caseBuilder))
+                .map(arg -> NoTestUtils.proxyInstance(arg, caseBuilder))
                 .toArray();
         // proxy fields
         Object[] proxiedFieldValues = Arrays.stream(fields)
-                .map(field -> proxyInstance(FieldUtils.getValue(field, proxiedInstance), caseBuilder))
+                .map(field -> NoTestUtils.proxyInstance(FieldUtils.getValue(field, proxiedInstance), caseBuilder))
                 .toArray();
         replaceFieldValue(originalInstance, fields, proxiedFieldValues);
         for (int i = 0; i < fields.length; i++) {

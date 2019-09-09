@@ -42,7 +42,7 @@ public class NoTestAgent extends ClassLoader {
         Class<?> clazz = new NoTestAgent().defineClass(null, bytes, 0, bytes.length);
         Object obj = clazz.newInstance();
         Method method1 = clazz.getDeclaredMethod("test1", int.class, Object.class);
-        method1.invoke(obj, 1, "2");
+        Object returnValue = method1.invoke(obj, 1, "2");
         Method method2 = clazz.getDeclaredMethod("test2", float.class, Object.class);
         method2.invoke(obj, (float) 3.0, "4");
     }
