@@ -52,11 +52,11 @@ public class NoTestAgent extends ClassLoader {
     }
 
     public static void main(String[] args) throws Throwable {
-//        ASMifier.main(new String[]{GeneratedClassA.class.getName()});
+        ASMifier.main(new String[]{GeneratedClassA.class.getName()});
 //        test(null);
 //        System.out.println(Arrays.stream(Type.getArgumentTypes("(Ljava/lang/String;Ljava/lang/instrument/Instrumentation;)V")).map(Type::getClassName).collect(Collectors.toList()));
 //        ProxyTest.proxy(DummyMain.class);
-        getArgs();
+//        getArgs();
     }
 
 }

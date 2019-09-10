@@ -38,6 +38,10 @@ public class GeneratedClassA {
         double vv8 = v8;
     }
 
+    public void array(Integer[][] arr) {
+
+    }
+
     public void invokeVirtual() {
         List<Object> list = new LinkedList<>();
         list.add(this);

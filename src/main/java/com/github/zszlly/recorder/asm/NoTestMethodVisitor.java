@@ -38,7 +38,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
     public void visitCode() {
         super.visitCode();
         List<Class<?>> argumentsClass = Arrays.stream(description.getArgumentsType())
-                .map(ClassUtils::type2Class)
+                .map(ClassUtils::forType)
                 .collect(Collectors.toList());
         int argLen = argumentsClass.size();
         // create caseBuilder and save as "caseBuilder"
@@ -55,17 +55,17 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
             Class<?> clazz = argumentsClass.get(i);
             mv.visitInsn(DUP);
             mv.visitIntInsn(BIPUSH, i);
-            // loading CaseBuilder
-            mv.visitVarInsn(ALOAD, caseBuilder);
             if (clazz.isPrimitive()) {
                 loadAndBoxing(clazz, localVarIndex);
             } else {
                 mv.visitVarInsn(ALOAD, localVarIndex);
             }
-            mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/Recording", "proxyInstance", "(Lcom/github/zszlly/builder/CaseBuilder;Ljava/lang/Object;)Ljava/lang/Object;", false);
+            // loading CaseBuilder
+            mv.visitVarInsn(ALOAD, caseBuilder);
+            mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "proxyInstance", "(Ljava/lang/Object;Lcom/github/zszlly/builder/CaseBuilder;)Ljava/lang/Object;", false);
 
             // replace the original argument with spied one
-            replaceArgument(clazz, localVarIndex);
+            unboxingAndReplaceArgument(clazz, localVarIndex);
 
             mv.visitInsn(AASTORE);
             localVarIndex += localVarLength(clazz);
@@ -78,7 +78,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
     @Override
     public void visitInsn(int opcode) {
         if ((opcode >= IRETURN && opcode <= RETURN) || opcode == ATHROW) {
-            Class<?> returnTypeClass = ClassUtils.type2Class(description.getReturnType());
+            Class<?> returnTypeClass = ClassUtils.forType(description.getReturnType());
             int rawReturnValue;
             switch (opcode) {
                 // record return value
@@ -89,6 +89,12 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     procedure();
                     mv.visitVarInsn(ILOAD, rawReturnValue);
                     boxing(returnTypeClass);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
+                    mv.visitVarInsn(ILOAD, rawReturnValue);
                     break;
                 case FRETURN:
                     rawReturnValue = newLocal(Type.FLOAT_TYPE);
@@ -97,6 +103,12 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     procedure();
                     mv.visitVarInsn(FLOAD, rawReturnValue);
                     boxing(returnTypeClass);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
+                    mv.visitVarInsn(FLOAD, rawReturnValue);
                     break;
                 case LRETURN:
                     rawReturnValue = newLocal(Type.LONG_TYPE);
@@ -105,6 +117,12 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     procedure();
                     mv.visitVarInsn(LLOAD, rawReturnValue);
                     boxing(returnTypeClass);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
+                    mv.visitVarInsn(LLOAD, rawReturnValue);
                     break;
                 case DRETURN:
                     rawReturnValue = newLocal(Type.DOUBLE_TYPE);
@@ -113,6 +131,12 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     procedure();
                     mv.visitVarInsn(DLOAD, rawReturnValue);
                     boxing(returnTypeClass);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
+                    mv.visitVarInsn(DLOAD, rawReturnValue);
                     break;
                 case ARETURN:
                     rawReturnValue = newLocal(Type.getType(returnTypeClass));
@@ -120,28 +144,27 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     mv.visitVarInsn(ASTORE, rawReturnValue);
                     procedure();
                     mv.visitVarInsn(ALOAD, rawReturnValue);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
+                    mv.visitVarInsn(ALOAD, rawReturnValue);
                     break;
                 case RETURN:
                     procedure();
                     mv.visitTypeInsn(NEW, "com/github/zszlly/model/VoidArgument");
                     mv.visitInsn(DUP);
                     mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/VoidArgument", "<init>", "()V", false);
-                    mv.visitTypeInsn(CHECKCAST, "com/github/zszlly/model/Argument");
+//                    mv.visitTypeInsn(CHECKCAST, "com/github/zszlly/model/Argument");
                     mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
-                    super.visitInsn(opcode);
-                    return;
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported opcode: " + opcode);
             }
-            mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
-            mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);
-            mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/recorder/asm/ASMCaseSaver", "saveCase", "(Lcom/github/zszlly/model/Case;)V", false);
-            mv.visitVarInsn(ALOAD, rawReturnValue);
         }
         super.visitInsn(opcode);
     }
@@ -178,7 +201,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
         mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgumentsList", "([Ljava/lang/Object;)Ljava/util/List;", false);
     }
 
-    private void replaceArgument(Class<?> clazz, int index) {
+    private void unboxingAndReplaceArgument(Class<?> clazz, int index) {
         mv.visitInsn(DUP);
         if (clazz == boolean.class) {
             mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
@@ -212,6 +235,9 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
             mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
             mv.visitVarInsn(DSTORE, index);
+        } else if (clazz.isArray()) {
+            mv.visitTypeInsn(CHECKCAST, Type.getType(clazz).getInternalName());
+            mv.visitVarInsn(ASTORE, index);
         } else {
             mv.visitVarInsn(ASTORE, index);
         }

@@ -6,7 +6,7 @@ public class NullArgument extends Argument {
 
     @JsonCreator
     public NullArgument() {
-        super(0);
+        super(-1);
     }
 
     @Override

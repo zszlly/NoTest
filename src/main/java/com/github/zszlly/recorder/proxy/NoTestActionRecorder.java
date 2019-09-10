@@ -41,6 +41,9 @@ public class NoTestActionRecorder implements MethodInterceptor {
      * @return true only if this invocation triggered by NoTestRecorder.
      */
     private static boolean needToRecord() {
+        if (true) {
+            return true;
+        }
         StackTraceElement[] stacks = Thread.currentThread().getStackTrace();
         for (int i = 3; i < stacks.length; ++i) {
             String className = stacks[i].getClassName();
@@ -71,7 +74,7 @@ public class NoTestActionRecorder implements MethodInterceptor {
             Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
             int returnValueInstanceId = NoTestUtils.getInstanceId(recordArgs);
             if (!mockedInstanceClassTable.containsKey(returnValueInstanceId)) {
-                return NoTestInstanceProxy.proxyInstance(returnValue, caseBuilder);
+                return NoTestUtils.proxyInstance(returnValue, caseBuilder);
             }
         }
         return returnValue;

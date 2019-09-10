@@ -1,9 +1,12 @@
 package com.github.zszlly.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import java.util.Objects;
 
 public class VoidArgument extends Argument {
 
+    @JsonCreator
     public VoidArgument() {
         super(-1);
     }
@@ -19,13 +22,6 @@ public class VoidArgument extends Argument {
     @Override
     public int hashCode() {
         return Objects.hash(instanceId);
-    }
-
-    @Override
-    public String toString() {
-        return "VoidArgument{" +
-                "instanceId=" + instanceId +
-                '}';
     }
 
 }

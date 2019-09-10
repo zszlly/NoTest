@@ -8,6 +8,7 @@ import com.github.zszlly.recorder.proxy.NoTestActionRecorder;
 import net.sf.cglib.proxy.Enhancer;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,11 @@ public class NoTestUtils {
         Class<?> clazz = instance.getClass();
         if (clazz.isArray()) {
             int len = Array.getLength(instance);
-
+            List<Argument> list = new ArrayList<>(len);
+            for (int i = 0; i < len; ++i) {
+                list.add(toArgument(Array.get(instance, i)));
+            }
+            return new ArrayArgument(instance.hashCode(), clazz.getComponentType().getName() ,list);
         }
         if (ClassUtils.isPrimitive(clazz)) {
             return new PrimitiveArgument(clazz, instance.toString());
@@ -103,6 +108,13 @@ public class NoTestUtils {
         }
         Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
         Class<?> clazz = instance.getClass();
+        if (clazz.isArray()) {
+            int len = Array.getLength(instance);
+            for (int i = 0; i < len; ++i) {
+                Array.set(instance, i, proxyInstance(Array.get(instance, i), caseBuilder));
+            }
+            return instance;
+        }
         Enhancer e = new Enhancer();
         if (NoTestUtils.isLambda(clazz)) {
             Class<?> interfaceClass = clazz.getInterfaces()[0];
@@ -115,28 +127,6 @@ public class NoTestUtils {
         }
         e.setCallback(new NoTestActionRecorder(instance, caseBuilder));
         return e.create();
-    }
-
-    // CaseBuilder ?
-    public static Argument arrayElementToArgument(Object arr, int index) {
-        Class<?> clazz = arr.getClass();
-        if (clazz == boolean[].class) {
-            return new PrimitiveArgument("boolean", Boolean.toString(Array.getBoolean(arr, index)));
-        } else if (clazz == char[].class) {
-            return new PrimitiveArgument("char", Character.toString(Array.getChar(arr, index)));
-        } else if (clazz == short[].class) {
-            return new PrimitiveArgument("short", Short.toString(Array.getShort(arr, index)));
-        } else if (clazz == int[].class) {
-            return new PrimitiveArgument("int", Integer.toString(Array.getInt(arr, index)));
-        } else if (clazz == long[].class) {
-            return new PrimitiveArgument("long", Long.toString(Array.getLong(arr, index)));
-        } else if (clazz == float[].class) {
-            return new PrimitiveArgument("float", Float.toString(Array.getFloat(arr, index)));
-        } else if (clazz == double[].class) {
-            return new PrimitiveArgument("double", Double.toString(Array.getDouble(arr, index)));
-        }
-        // TODO
-        return null;
     }
 
 }

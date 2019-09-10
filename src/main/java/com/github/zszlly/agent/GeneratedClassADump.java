@@ -91,6 +91,13 @@ public class GeneratedClassADump implements Opcodes {
             mv.visitEnd();
         }
         {
+            mv = cw.visitMethod(ACC_PUBLIC, "intArray", "([[I)V", null, null);
+            mv.visitCode();
+            mv.visitInsn(RETURN);
+            mv.visitMaxs(0, 2);
+            mv.visitEnd();
+        }
+        {
             mv = cw.visitMethod(ACC_PUBLIC, "invokeVirtual", "()V", null, null);
             mv.visitCode();
             mv.visitTypeInsn(NEW, "java/util/LinkedList");

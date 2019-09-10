@@ -1,7 +1,7 @@
 package com.github.zszlly.recorder.asm;
 
 import com.github.zszlly.builder.CaseBuilder;
-import com.github.zszlly.recorder.Recording;
+import com.github.zszlly.util.NoTestUtils;
 
 import java.util.Arrays;
 
@@ -11,7 +11,7 @@ public class NoTestASMRecorder {
         CaseBuilder builder = (CaseBuilder) args[0];
         return Arrays.stream(args)
                 .filter(arg -> arg != builder)
-                .map(arg -> Recording.proxyInstance(builder, arg))
+                .map(arg -> NoTestUtils.proxyInstance(arg, builder))
                 .toArray();
     }
 
