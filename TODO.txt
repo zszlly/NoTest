@@ -8,6 +8,6 @@ TODO list
 // for ASM recorder feature
 
 1.  replace the input arguments with proxies. // done
-2.  replace the fields with proxies.
+2.  replace the fields with proxies. // done
 
 ###### mock array arguments ? // done???? not sure ...

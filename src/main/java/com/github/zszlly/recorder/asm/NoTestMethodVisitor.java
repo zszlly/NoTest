@@ -14,14 +14,16 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 public class NoTestMethodVisitor extends LocalVariablesSorter {
 
-    private final MethodDescription description;
+    private final MethodDescription methodDescription;
+    private final List<FieldDescription> fieldDescriptions;
     private final boolean isStatic;
     private int caseBuilder;
     private int argumentsArray;
 
-    public NoTestMethodVisitor(int api, int access, String desc, MethodVisitor mv, MethodDescription description, boolean isStatic) {
+    public NoTestMethodVisitor(int api, int access, String desc, MethodVisitor mv, MethodDescription methodDescription, List<FieldDescription> fieldDescriptions, boolean isStatic) {
         super(api, access, desc, mv);
-        this.description = description;
+        this.methodDescription = methodDescription;
+        this.fieldDescriptions = fieldDescriptions;
         this.isStatic = isStatic;
     }
 
@@ -37,7 +39,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
     @Override
     public void visitCode() {
         super.visitCode();
-        List<Class<?>> argumentsClass = Arrays.stream(description.getArgumentsType())
+        List<Class<?>> argumentsClass = Arrays.stream(methodDescription.getArgumentsType())
                 .map(ClassUtils::forType)
                 .collect(Collectors.toList());
         int argLen = argumentsClass.size();
@@ -47,6 +49,41 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
         mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/builder/CaseBuilder", "<init>", "()V", false);
         caseBuilder = newLocal(Type.getType(CaseBuilder.class));
         mv.visitVarInsn(ASTORE, caseBuilder);
+        // spy fields
+        if (!isStatic) {
+            mv.visitVarInsn(ALOAD, caseBuilder);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "getFieldTable", "()Ljava/util/Map;", false);
+            fieldDescriptions
+                    .forEach(fieldDescription -> {
+                        String owner = fieldDescription.getOwner();
+                        String name = fieldDescription.getName();
+                        String typeDescriptor = fieldDescription.getTypeDescriptor();
+                        mv.visitInsn(DUP);
+                        mv.visitLdcInsn(name);
+                        mv.visitVarInsn(ALOAD, 0);
+                        mv.visitInsn(DUP);
+                        mv.visitInsn(DUP);
+                        mv.visitFieldInsn(GETFIELD, owner, name, typeDescriptor);
+                        Class<?> fieldClass = ClassUtils.forType(Type.getType(typeDescriptor));
+                        if (fieldClass.isPrimitive()) {
+                            boxing(fieldClass);
+                        }
+                        mv.visitVarInsn(ALOAD, caseBuilder);
+                        mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "proxyInstance", "(Ljava/lang/Object;Lcom/github/zszlly/builder/CaseBuilder;)Ljava/lang/Object;", false);
+                        if (fieldClass.isPrimitive()) {
+                            unboxing(fieldClass);
+                        }
+                        mv.visitFieldInsn(PUTFIELD, owner, name, typeDescriptor);
+                        mv.visitFieldInsn(GETFIELD, owner, name, typeDescriptor);
+                        if (fieldClass.isPrimitive()) {
+                            boxing(fieldClass);
+                        }
+                        mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                        mv.visitInsn(POP);
+                    });
+            mv.visitInsn(POP);
+        }
         // create arguments array
         mv.visitIntInsn(BIPUSH, argLen);
         mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
@@ -78,7 +115,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
     @Override
     public void visitInsn(int opcode) {
         if ((opcode >= IRETURN && opcode <= RETURN) || opcode == ATHROW) {
-            Class<?> returnTypeClass = ClassUtils.forType(description.getReturnType());
+            Class<?> returnTypeClass = ClassUtils.forType(methodDescription.getReturnType());
             int rawReturnValue;
             switch (opcode) {
                 // record return value
@@ -86,7 +123,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     rawReturnValue = newLocal(Type.INT_TYPE);
                     mv.visitInsn(DUP);
                     mv.visitVarInsn(ISTORE, rawReturnValue);
-                    procedure();
+                    saveCase();
                     mv.visitVarInsn(ILOAD, rawReturnValue);
                     boxing(returnTypeClass);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
@@ -100,7 +137,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     rawReturnValue = newLocal(Type.FLOAT_TYPE);
                     mv.visitInsn(DUP);
                     mv.visitVarInsn(FSTORE, rawReturnValue);
-                    procedure();
+                    saveCase();
                     mv.visitVarInsn(FLOAD, rawReturnValue);
                     boxing(returnTypeClass);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
@@ -114,7 +151,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     rawReturnValue = newLocal(Type.LONG_TYPE);
                     mv.visitInsn(DUP2);
                     mv.visitVarInsn(LSTORE, rawReturnValue);
-                    procedure();
+                    saveCase();
                     mv.visitVarInsn(LLOAD, rawReturnValue);
                     boxing(returnTypeClass);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
@@ -128,7 +165,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     rawReturnValue = newLocal(Type.DOUBLE_TYPE);
                     mv.visitInsn(DUP2);
                     mv.visitVarInsn(DSTORE, rawReturnValue);
-                    procedure();
+                    saveCase();
                     mv.visitVarInsn(DLOAD, rawReturnValue);
                     boxing(returnTypeClass);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
@@ -142,7 +179,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     rawReturnValue = newLocal(Type.getType(returnTypeClass));
                     mv.visitInsn(DUP);
                     mv.visitVarInsn(ASTORE, rawReturnValue);
-                    procedure();
+                    saveCase();
                     mv.visitVarInsn(ALOAD, rawReturnValue);
                     mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
                     mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
@@ -152,7 +189,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     mv.visitVarInsn(ALOAD, rawReturnValue);
                     break;
                 case RETURN:
-                    procedure();
+                    saveCase();
                     mv.visitTypeInsn(NEW, "com/github/zszlly/model/VoidArgument");
                     mv.visitInsn(DUP);
                     mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/VoidArgument", "<init>", "()V", false);
@@ -169,7 +206,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
         super.visitInsn(opcode);
     }
 
-    private void procedure() {
+    private void saveCase() {
         mv.visitVarInsn(ALOAD, caseBuilder);
         mv.visitInsn(DUP);
         // alloc memory for record
@@ -179,14 +216,14 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
         mv.visitTypeInsn(NEW, "com/github/zszlly/model/MethodHolder");
         mv.visitInsn(DUP);
         // put declaringClass as argument for methodHolder
-        mv.visitLdcInsn(description.getOwner().replace('/', '.'));
+        mv.visitLdcInsn(methodDescription.getOwner().replace('/', '.'));
         // put methodName as argument for methodHolder
-        mv.visitLdcInsn(description.getName());
+        mv.visitLdcInsn(methodDescription.getName());
         // alloc memory of linkedlist of argument argumentTypes for methodHolder
         mv.visitTypeInsn(NEW, "java/util/LinkedList");
         mv.visitInsn(DUP);
         mv.visitMethodInsn(INVOKESPECIAL, "java/util/LinkedList", "<init>", "()V", false);
-        Arrays.stream(description.getArgumentsType())
+        Arrays.stream(methodDescription.getArgumentsType())
                 .forEach(argumentType -> {
                     // put this method argument type into the linkedlist
                     mv.visitInsn(DUP);
@@ -203,41 +240,15 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
 
     private void unboxingAndReplaceArgument(Class<?> clazz, int index) {
         mv.visitInsn(DUP);
-        if (clazz == boolean.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-            mv.visitVarInsn(ISTORE, index);
-        } else if (clazz == char.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
-            mv.visitVarInsn(ISTORE, index);
-        } else if (clazz == byte.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
-            mv.visitVarInsn(ISTORE, index);
-        } else if (clazz == short.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
-            mv.visitVarInsn(ISTORE, index);
-        } else if (clazz == int.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+        unboxing(clazz);
+        if (clazz == boolean.class || clazz == char.class || clazz == byte.class || clazz == short.class || clazz == int.class) {
             mv.visitVarInsn(ISTORE, index);
         } else if (clazz == long.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
             mv.visitVarInsn(LSTORE, index);
         } else if (clazz == float.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
             mv.visitVarInsn(FSTORE, index);
         } else if (clazz == double.class) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
             mv.visitVarInsn(DSTORE, index);
-        } else if (clazz.isArray()) {
-            mv.visitTypeInsn(CHECKCAST, Type.getType(clazz).getInternalName());
-            mv.visitVarInsn(ASTORE, index);
         } else {
             mv.visitVarInsn(ASTORE, index);
         }
@@ -273,6 +284,36 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
         } else if (clazz == double.class) {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+        }
+    }
+
+    private void unboxing(Class<?> clazz) {
+        if (clazz == boolean.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+        } else if (clazz == char.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+        } else if (clazz == byte.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+        } else if (clazz == short.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
+        } else if (clazz == int.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+        } else if (clazz == long.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
+        } else if (clazz == float.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
+        } else if (clazz == double.class) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+        } else if (clazz.isArray()) {
+            mv.visitTypeInsn(CHECKCAST, Type.getType(clazz).getInternalName());
         }
     }
 

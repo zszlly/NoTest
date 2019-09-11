@@ -11,12 +11,14 @@ import com.github.zszlly.player.NoTestPlayer;
 import com.github.zszlly.recorder.NoTestRecorder;
 import com.github.zszlly.recorder.asm.ASMCaseSaver;
 import com.github.zszlly.recorder.asm.NoTestClassVisitor;
+import com.github.zszlly.util.FieldUtils;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -26,7 +28,7 @@ import static jdk.internal.org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 
 public class DummyMain extends ClassLoader {
 
-//    private int a;
+    private int a;
 
     public static void main(String[] args) throws Throwable {
         testRecord();
@@ -41,9 +43,10 @@ public class DummyMain extends ClassLoader {
         NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw);
         cr.accept(pt, EXPAND_FRAMES);
         byte[] bytes = cw.toByteArray();
+//        FileOutputStream out = new FileOutputStream("D:\\Suit\\Documents\\Workspace\\Java\\no-test\\a.class");
+//        out.write(bytes);
+//        out.close();
 //        CheckClassAdapter.verify(new ClassReader(bytes), true, new PrintWriter(System.out));
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ASMCaseSaver.init(out);
 
         Class<?> clazz = new DummyMain().defineClass(null, bytes, 0, bytes.length);
         Object obj = clazz.newInstance();
@@ -53,6 +56,9 @@ public class DummyMain extends ClassLoader {
         addB.invoke(obj, 2, (GetB) () -> 3);
         Method addArray = clazz.getDeclaredMethod("addArray", Integer[].class);
         addArray.invoke(obj, new Object[] {new Integer[] {1, 2, 3, 4, 5}});
+        Method addAAndB = clazz.getDeclaredMethod("addAAndB", GetB.class);
+        FieldUtils.setValue(obj, clazz.getDeclaredField("a"), 5);
+        addAAndB.invoke(obj, (GetB) () -> 4);
 //
 //        CaseHolderImpl caseHolderImpl = new CaseHolderImpl();
 //        DummyMain testDummyMain = NoTestRecorder.record(new DummyMain(), caseHolderImpl);
@@ -89,15 +95,16 @@ public class DummyMain extends ClassLoader {
         for (int i : arr) {
             sum += i;
         }
+        System.out.println(sum);
         return sum;
     }
 
-//    @NoTest
-//    public int addAAndB(GetB getB) {
-//        int value = a + getB.getBFn();
-//        System.out.println(value);
-//        return value;
-//    }
+    @NoTest
+    public int addAAndB(GetB getB) {
+        int value = a + getB.getBFn();
+        System.out.println(value);
+        return value;
+    }
 
     public interface GetB {
         int getBFn();

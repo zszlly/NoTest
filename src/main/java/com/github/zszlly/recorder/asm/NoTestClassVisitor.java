@@ -5,11 +5,15 @@ import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 
 public class NoTestClassVisitor extends ClassVisitor {
 
     private String classInternalName;
+    private List<FieldDescription> fieldDescriptions = new LinkedList<>();
 
     public NoTestClassVisitor(int api, ClassVisitor cv) {
         super(api, cv);
@@ -23,6 +27,7 @@ public class NoTestClassVisitor extends ClassVisitor {
 
     @Override
     public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        fieldDescriptions.add(new FieldDescription(name, classInternalName, desc));
         return super.visitField(access, name, desc, signature, value);
     }
 
@@ -32,8 +37,6 @@ public class NoTestClassVisitor extends ClassVisitor {
         if ("<init>".equals(name)) {
             return mv;
         }
-        return new NoTestMethodVisitor(Opcodes.ASM5, access, desc, mv, new MethodDescription(name, classInternalName, desc), (access & ACC_STATIC) != 0);
+        return new NoTestMethodVisitor(Opcodes.ASM5, access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);
     }
-
-
 }

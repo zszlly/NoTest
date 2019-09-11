@@ -90,4 +90,13 @@ public class GeneratedClassA {
         Object obj2 = args[1];
     }
 
+    public void field() {
+        field = new CaseBuilder();
+        CaseBuilder var = field;
+    }
+
+    public void invokeInterface(List<?> list) {
+        list.size();
+    }
+
 }

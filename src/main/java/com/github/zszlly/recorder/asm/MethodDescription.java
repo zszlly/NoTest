@@ -4,7 +4,6 @@ import jdk.internal.org.objectweb.asm.Type;
 
 public class MethodDescription {
 
-    // remove this
     private final String name;
     private final String owner;
     private final Type returnType;
