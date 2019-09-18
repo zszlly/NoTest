@@ -13,8 +13,11 @@ import java.util.List;
 public class ASMCaseSaver {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int MAX_CASES_COUNT = 10;
     private static OutputStream out;
     private static final List<Case> LIST = new LinkedList<>();
+    private static int count = 0;
+    private static final String STORAGE_FILE_PATH = "~/noTestCases.json";
 
     static {
         MAPPER.writerFor(new TypeReference<List>(){});
@@ -28,8 +31,15 @@ public class ASMCaseSaver {
         out = _out;
     }
 
-    public static void saveCase(Case c) {
+    public static synchronized void saveCase(Case c) {
         LIST.add(c);
+        if (++count == MAX_CASES_COUNT) {
+            try (OutputStream out = new FileOutputStream(STORAGE_FILE_PATH)) {
+                MAPPER.writeValue(out, new CaseHolder(LIST));
+            } catch (IOException e) {
+                SneakyThrow.sneakyThrow(e);
+            }
+        }
     }
 
     public static String toJsonString() {

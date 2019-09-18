@@ -1,6 +1,6 @@
 package com.github.zszlly;
 
-import com.sun.tools.attach.*;
+import com.sun.tools.attach.VirtualMachine;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,7 +12,7 @@ public class NoTestAttachment {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String pid = reader.readLine();
         VirtualMachine vm = VirtualMachine.attach(pid);
-        vm.loadAgent("D:\\Suit\\Documents\\Workspace\\Java\\no-test\\build\\libs\\no-test.jar");
+        vm.loadAgent(NoTestAttachment.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
         vm.detach();
     }
 

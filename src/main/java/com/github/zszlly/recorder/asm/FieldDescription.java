@@ -1,7 +1,5 @@
 package com.github.zszlly.recorder.asm;
 
-import jdk.internal.org.objectweb.asm.Type;
-
 public class FieldDescription {
 
     private final String name;

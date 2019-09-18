@@ -1,62 +1,59 @@
 package com.github.zszlly.agent;
 
-import com.github.zszlly.builder.CaseBuilder;
-import com.github.zszlly.recorder.asm.ASMCaseSaver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zszlly.recorder.asm.NoTestClassVisitor;
-import jdk.internal.org.objectweb.asm.*;
-import jdk.internal.org.objectweb.asm.util.ASMifier;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
-import jdk.internal.org.objectweb.asm.util.TraceClassVisitor;
-import org.w3c.dom.ls.LSOutput;
+import com.github.zszlly.util.ClassUtils;
+import com.github.zszlly.util.SneakyThrow;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.*;
+
+import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 
 public class NoTestAgent extends ClassLoader {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String NO_TEST_RECORD_METHOD_JSON = "~/noTestRecordMethod.json";
+    private static Map<Class<?>, Map<String, Set<String>>> NO_TEST_RECORD_METHOD = new HashMap();
+
+    // pattern [method full name][(argument type, split with ';')][return type]
+    // e.g. com.github.zszlly.agent.NoTestAgent.example(int;java.lang.Object)java.lang.Object
+    @SuppressWarnings("unchecked")
     public static void agentmain(String agentArgs, Instrumentation inst) throws ClassNotFoundException, UnmodifiableClassException, InterruptedException, IOException {
-//        test(inst);
+        ((List<String>) MAPPER.readValue(NoTestAgent.class.getClassLoader().getResourceAsStream(NO_TEST_RECORD_METHOD_JSON), List.class))
+                .forEach(str -> {
+                    int splitPoint = str.indexOf("\\(");
+                    String classNameAndMethodName = str.substring(0, splitPoint - 1);
+                    String[] tmp = classNameAndMethodName.split("\\.");
+                    Class<?> clazz = ClassUtils.forName(tmp[0]);
+                    NO_TEST_RECORD_METHOD.computeIfAbsent(clazz, key -> new HashMap<>());
+                    Map<String, Set<String>> methods = NO_TEST_RECORD_METHOD.get(clazz);
+                    String methodName = tmp[1];
+                    methods.computeIfAbsent(methodName, key -> new HashSet<>());
+                    Set<String> descriptions = methods.get(methodName);
+                    String methodDescription = str.substring(splitPoint);
+                    descriptions.add(methodDescription);
+                });
+        NO_TEST_RECORD_METHOD
+                .forEach((clazz, methods) -> {
+                    ClassReader cr = null;
+                    try {
+                        cr = new ClassReader(clazz.getName());
+                        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw, methods);
+                        cr.accept(pt, EXPAND_FRAMES);
+                        inst.redefineClasses(new ClassDefinition(clazz, cw.toByteArray()));
+                    } catch (IOException | ClassNotFoundException | UnmodifiableClassException e) {
+                        SneakyThrow.sneakyThrow(e);
+                    }
+                });
     }
 
-    private static void test(Instrumentation inst) throws ClassNotFoundException, UnmodifiableClassException, IOException {
-        String className = "com.github.zszlly.DummyMain";
-        Class<?> clazz = Class.forName(className);
-        ClassReader cr = new ClassReader(className);
-        ClassWriter cw = new ClassWriter(0);
-        TraceClassVisitor cv = new TraceClassVisitor(cw, new PrintWriter(System.out));
-        cr.accept(cv, 0);
-    }
-
-    private static void getArgs() throws Throwable {
-        ClassReader cr = new ClassReader(TestClass.class.getName());
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw);
-        cr.accept(pt, 0);
-        byte[] bytes = cw.toByteArray();
-        CheckClassAdapter.verify(new ClassReader(bytes), false, new PrintWriter(System.out));
-        ASMCaseSaver.init(System.out);
-        Class<?> clazz = new NoTestAgent().defineClass(null, bytes, 0, bytes.length);
-        Object obj = clazz.newInstance();
-        Method method1 = clazz.getDeclaredMethod("test1", int.class, Object.class);
-        Object returnValue = method1.invoke(obj, 1, "2");
-        Method method2 = clazz.getDeclaredMethod("test2", float.class, Object.class);
-        method2.invoke(obj, (float) 3.0, "4");
-    }
-
-    public static void printArgs(Object... args) {
-        System.out.println(Arrays.asList(args));
-    }
-
-    public static void main(String[] args) throws Throwable {
-        ASMifier.main(new String[]{GeneratedClassA.class.getName()});
-//        test(null);
-//        System.out.println(Arrays.stream(Type.getArgumentTypes("(Ljava/lang/String;Ljava/lang/instrument/Instrumentation;)V")).map(Type::getClassName).collect(Collectors.toList()));
-//        ProxyTest.proxy(DummyMain.class);
-//        getArgs();
-    }
 
 }

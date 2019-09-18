@@ -1,46 +1,58 @@
 package com.github.zszlly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.zszlly.annotation.NoTest;
-import com.github.zszlly.builder.CaseBuilder;
+import com.github.zszlly.agent.GeneratedClassA;
 import com.github.zszlly.io.CaseHolder;
 import com.github.zszlly.io.CaseLoader;
 import com.github.zszlly.io.CaseSaver;
 import com.github.zszlly.model.Case;
 import com.github.zszlly.player.NoTestPlayer;
-import com.github.zszlly.recorder.NoTestRecorder;
 import com.github.zszlly.recorder.asm.ASMCaseSaver;
 import com.github.zszlly.recorder.asm.NoTestClassVisitor;
 import com.github.zszlly.util.FieldUtils;
-import jdk.internal.org.objectweb.asm.ClassReader;
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.internal.org.objectweb.asm.util.CheckClassAdapter;
+import com.github.zszlly.util.MethodUtils;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.ASMifier;
 
-import java.io.*;
-import java.lang.reflect.Field;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static jdk.internal.org.objectweb.asm.ClassReader.EXPAND_FRAMES;
+import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 
 public class DummyMain extends ClassLoader {
 
     private int a;
 
     public static void main(String[] args) throws Throwable {
-        testRecord();
+        DummyMain dummyMain = new DummyMain();
+        while (true) {
+            dummyMain.add(1, 2);
+            Thread.sleep(1000);
+        }
+    }
+
+    private static void printASM() throws IOException {
+        ASMifier.main(new String[] {GeneratedClassA.class.getName()});
     }
 
     private static void testRecord() throws Throwable {
+        System.out.println(MethodUtils.toNoTestMethodDescription(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
+//        test();
+    }
 
+    private static void test() throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, NoSuchFieldException {
         System.out.println("test record");
 
         ClassReader cr = new ClassReader(DummyMain.class.getName());
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw);
+        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw, null);
         cr.accept(pt, EXPAND_FRAMES);
         byte[] bytes = cw.toByteArray();
 //        FileOutputStream out = new FileOutputStream("D:\\Suit\\Documents\\Workspace\\Java\\no-test\\a.class");
@@ -55,7 +67,7 @@ public class DummyMain extends ClassLoader {
         Method addB = clazz.getDeclaredMethod("addB", int.class, GetB.class);
         addB.invoke(obj, 2, (GetB) () -> 3);
         Method addArray = clazz.getDeclaredMethod("addArray", Integer[].class);
-        addArray.invoke(obj, new Object[] {new Integer[] {1, 2, 3, 4, 5}});
+        addArray.invoke(obj, new Object[]{new Integer[]{1, 2, 3, 4, 5}});
         Method addAAndB = clazz.getDeclaredMethod("addAAndB", GetB.class);
         FieldUtils.setValue(obj, clazz.getDeclaredField("a"), 5);
         addAAndB.invoke(obj, (GetB) () -> 4);
@@ -75,21 +87,18 @@ public class DummyMain extends ClassLoader {
         player.play();
     }
 
-    @NoTest
     public int add(int a, int b) {
         int value = a + b;
         System.out.println(value);
         return value;
     }
 
-    @NoTest
     public int addB(int a, GetB getB) {
         int value = a + getB.getBFn();
         System.out.println(value);
         return value;
     }
 
-    @NoTest
     public int addArray(Integer[] arr) {
         int sum = 0;
         for (int i : arr) {
@@ -99,7 +108,6 @@ public class DummyMain extends ClassLoader {
         return sum;
     }
 
-    @NoTest
     public int addAAndB(GetB getB) {
         int value = a + getB.getBFn();
         System.out.println(value);

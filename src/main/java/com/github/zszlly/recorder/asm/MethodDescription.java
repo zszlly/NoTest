@@ -1,6 +1,6 @@
 package com.github.zszlly.recorder.asm;
 
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 
 public class MethodDescription {
 

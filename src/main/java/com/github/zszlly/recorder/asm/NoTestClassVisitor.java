@@ -1,22 +1,23 @@
 package com.github.zszlly.recorder.asm;
 
-import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 public class NoTestClassVisitor extends ClassVisitor {
 
+    private final Map<String, Set<String>> methods;
     private String classInternalName;
     private List<FieldDescription> fieldDescriptions = new LinkedList<>();
 
-    public NoTestClassVisitor(int api, ClassVisitor cv) {
+    public NoTestClassVisitor(int api, ClassVisitor cv, Map<String, Set<String>> methods) {
         super(api, cv);
+        this.methods = methods;
     }
 
     @Override
@@ -34,9 +35,10 @@ public class NoTestClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        if ("<init>".equals(name)) {
-            return mv;
+        Set<String> methodDescriptions = methods.get(name);
+        if (methodDescriptions != null && methodDescriptions.contains(desc)) {
+            return new NoTestMethodVisitor(access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);
         }
-        return new NoTestMethodVisitor(Opcodes.ASM5, access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);
+        return mv;
     }
 }
