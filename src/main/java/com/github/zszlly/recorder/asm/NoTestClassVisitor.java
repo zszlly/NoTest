@@ -37,7 +37,7 @@ public class NoTestClassVisitor extends ClassVisitor {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
         Set<String> methodDescriptions = methods.get(name);
         if (methodDescriptions != null && methodDescriptions.contains(desc)) {
-            return new NoTestMethodVisitor(access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);
+            return new NoTestMethodVisitor(Opcodes.ASM5, access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);
         }
         return mv;
     }

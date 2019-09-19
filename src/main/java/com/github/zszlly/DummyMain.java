@@ -1,7 +1,6 @@
 package com.github.zszlly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.zszlly.agent.GeneratedClassA;
 import com.github.zszlly.io.CaseHolder;
 import com.github.zszlly.io.CaseLoader;
 import com.github.zszlly.io.CaseSaver;
@@ -31,6 +30,7 @@ public class DummyMain extends ClassLoader {
     private int a;
 
     public static void main(String[] args) throws Throwable {
+        System.out.println(MethodUtils.toNoTestMethodDescription(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
         DummyMain dummyMain = new DummyMain();
         while (true) {
             dummyMain.add(1, 2);
@@ -39,7 +39,7 @@ public class DummyMain extends ClassLoader {
     }
 
     private static void printASM() throws IOException {
-        ASMifier.main(new String[] {GeneratedClassA.class.getName()});
+        ASMifier.main(new String[] {DummyMain.class.getName()});
     }
 
     private static void testRecord() throws Throwable {

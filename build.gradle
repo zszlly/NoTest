@@ -48,5 +48,6 @@ shadowJar {
     manifest {
         attributes 'Main-Class': 'com.github.zszlly.NoTestAttachment'
         attributes 'Agent-Class': 'com.github.zszlly.agent.NoTestAgent'
+        attributes 'Can-Redefine-Classes': 'true'
     }
 }

@@ -20,8 +20,8 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
     private int caseBuilder;
     private int argumentsArray;
 
-    public NoTestMethodVisitor(int access, String desc, MethodVisitor mv, MethodDescription methodDescription, List<FieldDescription> fieldDescriptions, boolean isStatic) {
-        super(access, desc, mv);
+    public NoTestMethodVisitor(int api, int access, String desc, MethodVisitor mv, MethodDescription methodDescription, List<FieldDescription> fieldDescriptions, boolean isStatic) {
+        super(api, access, desc, mv);
         this.methodDescription = methodDescription;
         this.fieldDescriptions = fieldDescriptions;
         this.isStatic = isStatic;

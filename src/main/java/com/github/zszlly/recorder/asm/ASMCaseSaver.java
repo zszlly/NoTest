@@ -17,7 +17,7 @@ public class ASMCaseSaver {
     private static OutputStream out;
     private static final List<Case> LIST = new LinkedList<>();
     private static int count = 0;
-    private static final String STORAGE_FILE_PATH = "~/noTestCases.json";
+    private static final String STORAGE_FILE_PATH = "/tmp/noTestCases.json";
 
     static {
         MAPPER.writerFor(new TypeReference<List>(){});
