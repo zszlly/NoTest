@@ -1,50 +1,48 @@
 package com.github.zszlly;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.zszlly.agent.GeneratedClassA;
+import com.github.zszlly.annotation.NoTest;
 import com.github.zszlly.io.CaseHolder;
 import com.github.zszlly.io.CaseLoader;
 import com.github.zszlly.io.CaseSaver;
+import com.github.zszlly.mark.NoTestMark;
 import com.github.zszlly.model.Case;
 import com.github.zszlly.player.NoTestPlayer;
 import com.github.zszlly.recorder.asm.ASMCaseSaver;
 import com.github.zszlly.recorder.asm.NoTestClassVisitor;
 import com.github.zszlly.util.FieldUtils;
-import com.github.zszlly.util.MethodUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.util.ASMifier;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 
-public class DummyMain extends ClassLoader {
+public class DummyMain extends ClassLoader implements NoTestMark {
 
     private int a;
 
     public static void main(String[] args) throws Throwable {
-        System.out.println(MethodUtils.toNoTestMethodDescription(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
-        DummyMain dummyMain = new DummyMain();
-        while (true) {
-            dummyMain.add(1, 2);
-            Thread.sleep(1000);
-        }
+        test();
+//        System.out.println(MethodUtils.toNoTestMethodDescription(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
+//        DummyMain dummyMain = new DummyMain();
+//        while (true) {
+//            dummyMain.add(1, 2);
+//            Thread.sleep(1000);
+//        }
     }
 
     private static void printASM() throws IOException {
-        ASMifier.main(new String[] {DummyMain.class.getName()});
-    }
-
-    private static void testRecord() throws Throwable {
-        System.out.println(MethodUtils.toNoTestMethodDescription(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
-//        test();
+        ASMifier.main(new String[] {GeneratedClassA.class.getName()});
     }
 
     private static void test() throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, NoSuchFieldException {
@@ -52,7 +50,20 @@ public class DummyMain extends ClassLoader {
 
         ClassReader cr = new ClassReader(DummyMain.class.getName());
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw, null);
+        Map<String, Set<String>> methods = new HashMap<>();
+        Set<String> set = new HashSet<>();
+        set.add(Type.getMethodDescriptor(DummyMain.class.getDeclaredMethod("add", int.class, int.class)));
+        methods.put("add", set);
+        set = new HashSet<>();
+        set.add(Type.getMethodDescriptor(DummyMain.class.getDeclaredMethod("addB", int.class, GetB.class)));
+        methods.put("addB", set);
+        set = new HashSet<>();
+        set.add(Type.getMethodDescriptor(DummyMain.class.getDeclaredMethod("addArray", Integer[].class)));
+        methods.put("addArray", set);
+        set = new HashSet<>();
+        set.add(Type.getMethodDescriptor(DummyMain.class.getDeclaredMethod("addAAndB", GetB.class)));
+        methods.put("addAAndB", set);
+        NoTestClassVisitor pt = new NoTestClassVisitor(Opcodes.ASM5, cw, methods);
         cr.accept(pt, EXPAND_FRAMES);
         byte[] bytes = cw.toByteArray();
 //        FileOutputStream out = new FileOutputStream("D:\\Suit\\Documents\\Workspace\\Java\\no-test\\a.class");
@@ -80,6 +91,7 @@ public class DummyMain extends ClassLoader {
 //        testDummyMain.addAAndB(() -> 4);
         ObjectMapper mapper = new ObjectMapper();
         String caseJson = ASMCaseSaver.toJsonString();
+        JsonNode node = mapper.readTree(caseJson);
         System.out.println(caseJson);
         System.out.println("test playback");
         Collection<Case> cases = mapper.readValue(caseJson, CaseHolder.class).getCases();
@@ -87,18 +99,21 @@ public class DummyMain extends ClassLoader {
         player.play();
     }
 
+    @NoTest
     public int add(int a, int b) {
         int value = a + b;
         System.out.println(value);
         return value;
     }
 
+    @NoTest
     public int addB(int a, GetB getB) {
         int value = a + getB.getBFn();
         System.out.println(value);
         return value;
     }
 
+    @NoTest
     public int addArray(Integer[] arr) {
         int sum = 0;
         for (int i : arr) {
@@ -108,6 +123,7 @@ public class DummyMain extends ClassLoader {
         return sum;
     }
 
+    @NoTest
     public int addAAndB(GetB getB) {
         int value = a + getB.getBFn();
         System.out.println(value);

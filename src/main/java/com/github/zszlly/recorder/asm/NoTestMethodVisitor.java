@@ -126,7 +126,7 @@ public class NoTestMethodVisitor extends LocalVariablesSorter {
                     saveCase();
                     mv.visitVarInsn(ILOAD, rawReturnValue);
                     boxing(returnTypeClass);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;");
+                    mv.visitMethodInsn(INVOKESTATIC, "com/github/zszlly/util/NoTestUtils", "toArgument", "(Ljava/lang/Object;)Lcom/github/zszlly/model/Argument;", false);
                     mv.visitMethodInsn(INVOKESPECIAL, "com/github/zszlly/model/Record", "<init>", "(Lcom/github/zszlly/model/MethodHolder;Ljava/util/List;Lcom/github/zszlly/model/Argument;)V", false);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "setRecord", "(Lcom/github/zszlly/model/Record;)V", false);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/github/zszlly/builder/CaseBuilder", "build", "()Lcom/github/zszlly/model/Case;", false);

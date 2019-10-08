@@ -1,16 +1,15 @@
 package com.github.zszlly.recorder.asm;
 
+import com.github.zszlly.mark.NoTestMark;
 import org.objectweb.asm.*;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 public class NoTestClassVisitor extends ClassVisitor {
 
+    private boolean isNoTest = false;
     private final Map<String, Set<String>> methods;
     private String classInternalName;
     private List<FieldDescription> fieldDescriptions = new LinkedList<>();
@@ -22,7 +21,19 @@ public class NoTestClassVisitor extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        super.visit(version, access, name, signature, superName, interfaces);
+        for (String interf : interfaces) {
+            if (NoTestMark.INTERNAL_NAME.equals(interf)) {
+                isNoTest = true;
+                break;
+            }
+        }
+        if (isNoTest) {
+            super.visit(version, access, name, signature, superName, interfaces);
+            return;
+        }
+        String[] newInterfaces = Arrays.copyOf(interfaces, interfaces.length + 1);
+        newInterfaces[interfaces.length] = NoTestMark.INTERNAL_NAME;
+        super.visit(version, access, name, signature, superName, newInterfaces);
         classInternalName = name;
     }
 
@@ -35,6 +46,9 @@ public class NoTestClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        if (isNoTest) {
+            return mv;
+        }
         Set<String> methodDescriptions = methods.get(name);
         if (methodDescriptions != null && methodDescriptions.contains(desc)) {
             return new NoTestMethodVisitor(Opcodes.ASM5, access, desc, mv, new MethodDescription(name, classInternalName, desc), fieldDescriptions, (access & ACC_STATIC) != 0);

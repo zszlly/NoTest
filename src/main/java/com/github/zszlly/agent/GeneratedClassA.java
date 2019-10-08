@@ -1,6 +1,7 @@
 package com.github.zszlly.agent;
 
 import com.github.zszlly.builder.CaseBuilder;
+import com.github.zszlly.mark.NoTestMark;
 import com.github.zszlly.model.Argument;
 import com.github.zszlly.model.MethodHolder;
 import com.github.zszlly.model.Record;
@@ -97,6 +98,13 @@ public class GeneratedClassA {
 
     public void invokeInterface(List<?> list) {
         list.size();
+    }
+
+    public int ifAsm() {
+        if (this instanceof NoTestMark) {
+            return 1;
+        }
+        return -1;
     }
 
 }
