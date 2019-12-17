@@ -9,7 +9,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
@@ -21,14 +20,15 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 public class NoTestAgent extends ClassLoader {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String NO_TEST_RECORD_METHOD_JSON = "/tmp/noTestRecordMethod.json";
-    private static Map<Class<?>, Map<String, Set<String>>> NO_TEST_RECORD_METHOD = new HashMap();
+    private static final String RECORD_METHOD_PARAMETER = "recordMethod";
+    private static final String DEFAULT_NO_TEST_RECORD_METHOD_JSON_PATH = "noTestRecordMethod.json";
+    private static Map<Class<?>, Map<String, Set<String>>> NO_TEST_RECORD_METHOD = new HashMap<>();
 
     // pattern [method full name][(argument type, split with ';')][return type]
     // e.g. com.github.zszlly.agent.NoTestAgent.example(int;java.lang.Object)java.lang.Object
     @SuppressWarnings("unchecked")
-    public static void agentmain(String agentArgs, Instrumentation inst) throws ClassNotFoundException, UnmodifiableClassException, InterruptedException, IOException {
-        ((List<String>) MAPPER.readValue(new FileInputStream(NO_TEST_RECORD_METHOD_JSON), List.class))
+    public static void agentmain(String agentArgs, Instrumentation inst) throws IOException {
+        ((List<String>) MAPPER.readValue(NoTestAgent.class.getClassLoader().getResourceAsStream(System.getProperty(RECORD_METHOD_PARAMETER, DEFAULT_NO_TEST_RECORD_METHOD_JSON_PATH)), List.class))
                 .forEach(str -> {
                     int splitPoint = str.indexOf("(");
                     String classNameAndMethodName = str.substring(0, splitPoint);

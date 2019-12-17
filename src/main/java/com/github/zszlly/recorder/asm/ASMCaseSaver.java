@@ -14,21 +14,14 @@ public class ASMCaseSaver {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_CASES_COUNT = 10;
-    private static OutputStream out;
     private static final List<Case> LIST = new LinkedList<>();
     private static int count = 0;
-    private static final String STORAGE_FILE_PATH = "/tmp/noTestCases.json";
+    private static final String STORAGE_FILE_PATH_KEY = "caseSavingPath";
+    private static final String STORAGE_FILE_PATH;
 
     static {
         MAPPER.writerFor(new TypeReference<List>(){});
-    }
-
-    public static void init(String path) throws FileNotFoundException {
-        out = new FileOutputStream(new File(path));
-    }
-
-    public static void init(OutputStream _out) {
-        out = _out;
+        STORAGE_FILE_PATH = System.getProperty(STORAGE_FILE_PATH_KEY, "./noTestCases.json");
     }
 
     public static synchronized void saveCase(Case c) {

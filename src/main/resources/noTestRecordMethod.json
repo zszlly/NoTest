@@ -1,0 +1,6 @@
+[
+  "Lcom/github/zszlly/DummyMain;.add(II)I",
+  "Lcom/github/zszlly/DummyMain;.addB(ILcom/github/zszlly/DummyMain$GetB;)I",
+  "Lcom/github/zszlly/DummyMain;.addArray([Ljava/lang/Integer;)I",
+  "Lcom/github/zszlly/DummyMain;.addAAndB(Lcom/github/zszlly/DummyMain$GetB;)I"
+]
