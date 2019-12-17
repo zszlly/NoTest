@@ -16,12 +16,14 @@ public class ASMCaseSaver {
     private static final int MAX_CASES_COUNT = 10;
     private static final List<Case> LIST = new LinkedList<>();
     private static int count = 0;
-    private static final String STORAGE_FILE_PATH_KEY = "caseSavingPath";
-    private static final String STORAGE_FILE_PATH;
+    private static String STORAGE_FILE_PATH;
 
     static {
         MAPPER.writerFor(new TypeReference<List>(){});
-        STORAGE_FILE_PATH = System.getProperty(STORAGE_FILE_PATH_KEY, "./noTestCases.json");
+    }
+
+    public static void setStorageFilePath(String storageFilePath) {
+        STORAGE_FILE_PATH = storageFilePath;
     }
 
     public static synchronized void saveCase(Case c) {
@@ -29,6 +31,7 @@ public class ASMCaseSaver {
         if (++count == MAX_CASES_COUNT) {
             try (OutputStream out = new FileOutputStream(STORAGE_FILE_PATH)) {
                 MAPPER.writeValue(out, new CaseHolder(LIST));
+                System.out.println("Cases saved to " + STORAGE_FILE_PATH);
             } catch (IOException e) {
                 SneakyThrow.sneakyThrow(e);
             }

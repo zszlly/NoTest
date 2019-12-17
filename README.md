@@ -6,7 +6,7 @@ Its basic idea is to action method-level input/output as test vectors by running
 
 ## Build
 
-run gradle task "shadowJar", then the output jar will be placed at "\<project folder\>/build/libs/no-test.jar"
+run gradle task `shadowJar`, then the output jar will be placed at `<project folder>/build/libs/no-test.jar`
 
 ## Usage
 
@@ -29,13 +29,19 @@ run gradle task "shadowJar", then the output jar will be placed at "\<project fo
 
 3. copy the json properties file and built jar file "\<project folder\>/build/libs/no-test.jar" into the host where your program running at.
 
-4. run `jps` to get your java program pid
+4. run demo program in first terminal at the host like:
 
-5. run command:
+        java -cp "no-test.jar" com.github.zszlly.DummyMain
+
+5. run `jps` to get your java program pid in second terminal.
+
+6. run command in second terminal:
         
-        java -DrecordMethod=<your configuration file path> -DcaseSavingPath=<the path where recorded files will be saved to> -jar no-test.jar <your process PID>
+        java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -DrecordMethod=<your configuration file path> -DcaseSavingPath=<the path where recorded files will be saved to> -jar no-test.jar <your process PID>
 
-6. then you can find the latest 10 method calls for which you filled in your configuration.
+7. return to first terminal and press any key to continue the demo program.
+
+8. you will find the latest 10 method calls for which you filled in your configuration.
 
 #### Playback
 

@@ -51,7 +51,8 @@ public class NoTestActionRecorder implements MethodInterceptor {
                 return true;
             }
         }
-        throw new IllegalStateException("NoTestActionRecorder instance not called by NoTestRecorder.");
+        return true;
+//        throw new IllegalStateException("NoTestActionRecorder instance not called by NoTestRecorder.");
     }
 
     @Override
