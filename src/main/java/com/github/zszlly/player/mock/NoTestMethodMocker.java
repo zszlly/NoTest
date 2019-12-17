@@ -68,7 +68,7 @@ public class NoTestMethodMocker {
     }
 
     private Object toInstance(Argument argument) {
-        if (argument == null) {
+        if (argument == null || argument instanceof VoidArgument) {
             return null;
         }
         if (argument instanceof PrimitiveArgument) {

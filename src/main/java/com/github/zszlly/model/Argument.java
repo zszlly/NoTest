@@ -1,5 +1,6 @@
 package com.github.zszlly.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.zszlly.io.JsonObject;
 
 import java.util.Objects;
@@ -12,6 +13,7 @@ public abstract class Argument implements JsonObject {
         this.instanceId = instanceId;
     }
 
+    @JsonProperty("instanceId")
     public Integer getInstanceId() {
         return instanceId;
     }

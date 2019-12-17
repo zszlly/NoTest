@@ -1,5 +1,7 @@
 package com.github.zszlly.util;
 
+import org.objectweb.asm.Type;
+
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -85,6 +87,28 @@ public class ClassUtils {
             return UNWRAPPED_PRIMITIVE_CLASSES_NAME_MAP.get(className);
         }
         try {
+            if (className.endsWith("[]")) {
+                switch (className) {
+                    case "boolean[]":
+                        return boolean[].class;
+                    case "char[]":
+                        return char[].class;
+                    case "byte[]":
+                        return byte[].class;
+                    case "short[]":
+                        return short[].class;
+                    case "int[]":
+                        return int[].class;
+                    case "float[]":
+                        return float[].class;
+                    case "long[]":
+                        return long[].class;
+                    case "double[]":
+                        return double[].class;
+                    default:
+                        className = "[L" + className.replace("[]", "") + ";";
+                }
+            }
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
             SneakyThrow.sneakyThrow(e);
@@ -101,6 +125,10 @@ public class ClassUtils {
             SneakyThrow.sneakyThrow(e);
         }
         return null;
+    }
+
+    public static Class<?> forType(Type type) {
+        return forName(type.getClassName());
     }
 
 }

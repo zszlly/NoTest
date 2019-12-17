@@ -14,11 +14,13 @@ import java.util.stream.Collectors;
 
 public class MethodHolder implements JsonObject {
 
+    private final Method method;
     private final String declaringClass;
     private final String methodName;
     private final List<String> argumentTypes;
 
     public MethodHolder(Method method) {
+        this.method = method;
         this.declaringClass = method.getDeclaringClass().getName();
         this.methodName = method.getName();
         this.argumentTypes = Arrays.stream(method.getParameterTypes()).map(Class::getName).collect(Collectors.toList());
@@ -29,6 +31,7 @@ public class MethodHolder implements JsonObject {
             @JsonProperty("declaringClass") String declaringClass,
             @JsonProperty("methodName") String methodName,
             @JsonProperty("argumentTypes") List<String> argumentTypes) {
+        this.method = ClassUtils.getMethod(ClassUtils.forName(declaringClass), methodName, argumentTypes);
         this.declaringClass = declaringClass;
         this.methodName = methodName;
         this.argumentTypes = argumentTypes;
@@ -51,12 +54,7 @@ public class MethodHolder implements JsonObject {
 
     @JsonIgnore
     public Method getMethod() {
-        try {
-            return ClassUtils.getMethod(ClassUtils.forName(declaringClass), methodName, argumentTypes);
-        } catch (Exception e) {
-            System.out.println(toString());
-            throw e;
-        }
+        return method;
     }
 
     @Override

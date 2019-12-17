@@ -1,12 +1,11 @@
 package com.github.zszlly.player.mock;
 
-import com.github.zszlly.model.Argument;
-import com.github.zszlly.model.Case;
-import com.github.zszlly.model.MockedArgument;
-import com.github.zszlly.model.PrimitiveArgument;
+import com.github.zszlly.model.*;
+import com.github.zszlly.util.ClassUtils;
 import com.github.zszlly.util.FieldUtils;
 import com.github.zszlly.util.NoTestUtils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -61,11 +60,24 @@ public class NoTestCasePlayer implements Runnable {
     }
 
     private Object mapInstance(Argument arg) {
+        if (arg == null || arg instanceof NullArgument || arg instanceof VoidArgument) {
+            return null;
+        }
         if (arg instanceof PrimitiveArgument) {
             return ((PrimitiveArgument) arg).getValueInstance();
         }
         if (arg instanceof MockedArgument) {
             return mockerMap.get(arg.getInstanceId()).getInstance();
+        }
+        if (arg instanceof ArrayArgument) {
+            ArrayArgument arrArg = (ArrayArgument) arg;
+            List<Argument> elements = arrArg.getElements();
+            int len = elements.size();
+            Object arr = Array.newInstance(ClassUtils.forName(arrArg.getElementTypeName()), len);
+            for (int i = 0; i < len; ++i) {
+                Array.set(arr, i, mapInstance(elements.get(i)));
+            }
+            return arr;
         }
         throw new IllegalArgumentException("Unsupported argument: " + arg.toString());
     }

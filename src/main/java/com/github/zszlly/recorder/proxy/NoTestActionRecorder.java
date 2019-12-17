@@ -26,7 +26,7 @@ public class NoTestActionRecorder implements MethodInterceptor {
     private final Object noTestInstance;
     private final CaseBuilder caseBuilder;
 
-    NoTestActionRecorder(Object noTestInstance, CaseBuilder caseBuilder) {
+    public NoTestActionRecorder(Object noTestInstance, CaseBuilder caseBuilder) {
         try {
             noTestInstance.getClass().getDeclaredMethod("getInstanceId");
             throw new IllegalArgumentException("Impact method \"getInstanceId\" with no arg, please rename the method or change the input args.");
@@ -51,7 +51,8 @@ public class NoTestActionRecorder implements MethodInterceptor {
                 return true;
             }
         }
-        throw new IllegalStateException("NoTestActionRecorder instance not called by NoTestRecorder.");
+        return true;
+//        throw new IllegalStateException("NoTestActionRecorder instance not called by NoTestRecorder.");
     }
 
     @Override
@@ -71,7 +72,7 @@ public class NoTestActionRecorder implements MethodInterceptor {
             Map<Integer, Class<?>> mockedInstanceClassTable = caseBuilder.getMockedInstanceClassTable();
             int returnValueInstanceId = NoTestUtils.getInstanceId(recordArgs);
             if (!mockedInstanceClassTable.containsKey(returnValueInstanceId)) {
-                return NoTestInstanceProxy.proxyInstance(returnValue, caseBuilder);
+                return NoTestUtils.proxyInstance(returnValue, caseBuilder);
             }
         }
         return returnValue;
